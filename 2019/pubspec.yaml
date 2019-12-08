@@ -1,0 +1,4 @@
+name: aoc2019
+
+dependencies:
+  test:
