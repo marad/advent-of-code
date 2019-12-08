@@ -26,5 +26,5 @@ I)SAN""";
   var sanPath = orbits.getPath('SAN');
 
 
-
+  print(orbits.calcTransfers("YOU", "SAN"));
 }

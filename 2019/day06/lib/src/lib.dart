@@ -48,15 +48,25 @@ class Orbits {
 
     // find common ancestor
     var lastCommonStar = "COM";
-    var lastCommonStarIndex = 0;
-    for(lastCommonStarIndex = 0; lastCommonStarIndex <= min(sourcePath.length, targetPath.length); lastCommonStarIndex++) {
-      if (sourcePath[lastCommonStarIndex] == targetPath[lastCommonStarIndex]) {
-        lastCommonStar = sourcePath[lastCommonStarIndex];
+    var lastcommonStarIndex = 0;
+    for(var i = 0; i <= min(sourcePath.length, targetPath.length); i++) {
+      if (sourcePath[i] == targetPath[i]) {
+        lastCommonStar = sourcePath[i];
+        lastcommonStarIndex = i;
         continue;
       } else {
         break;
       }
     }
+
+    // remove common prefix
+    sourcePath.removeRange(0, lastcommonStarIndex);
+    targetPath.removeRange(0, lastcommonStarIndex);
+
+    print(sourcePath);
+    print(targetPath);
+
+    return sourcePath.length + targetPath.length - 2;
   }
 }
 
