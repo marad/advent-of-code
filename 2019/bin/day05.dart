@@ -1,3 +1,4 @@
+import 'package:aoc2019/src/computer.dart';
 import 'package:aoc2019/src/day05.dart';
 
 void main() {

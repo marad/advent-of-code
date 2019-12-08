@@ -6,15 +6,27 @@
     "configurations": [
         {
             "name": "Dart: Run all Tests",
-            "type": "dart",
+            "program": "./test",
             "request": "launch",
-            "program": "./test/"
+            "type": "dart",
         },
         {
-            "name": "Dart",
-            "program": "bin/main.dart",
+            "name": "Day 01",
+            "program": "bin/day01.dart",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+        },
+        {
+            "name": "Day 02",
+            "program": "bin/day02.dart",
+            "request": "launch",
+            "type": "dart",
+        },
+        {
+            "name": "Day 07",
+            "program": "bin/day07.dart",
+            "request": "launch",
+            "type": "dart",
         }
     ]
 }

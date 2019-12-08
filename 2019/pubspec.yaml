@@ -1,4 +1,5 @@
 name: aoc2019
 
 dependencies:
-  test:
+  test: ^1.9.3
+  trotter: ^1.0.2
