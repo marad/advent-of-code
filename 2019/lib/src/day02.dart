@@ -1,9 +1,9 @@
 import 'computer.dart';
 
 List<int> runProgram(List<int> program) {
-  var computer = Computer(List.from(program));
+  var computer = Computer(program);
   computer.run();
-  return computer.memory;
+  return computer.memory.take(program.length).toList();
 }
 
 int runWithArgs(List<int> input, int noun, int verb) {

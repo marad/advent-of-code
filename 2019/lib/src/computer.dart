@@ -90,7 +90,7 @@ class Computer {
       case OP_ADD: 
         var a = _getArgValue(1);
         var b = _getArgValue(2);
-        var targetAddress = _getArgImmediateValue(3);
+        var targetAddress = _getAddress(3);
         if (_debug) printInstructions(3);
         _saveValueAt(a+b, targetAddress);
         ip += 4;
@@ -99,14 +99,14 @@ class Computer {
       case OP_MUL:
         var a = _getArgValue(1);
         var b = _getArgValue(2);
-        var targetAddress = _getArgImmediateValue(3);
+        var targetAddress = _getAddress(3);
         if (_debug) printInstructions(3);
         _saveValueAt(a*b, targetAddress);
         ip += 4;
         break;
 
       case OP_INPUT:
-        var targetAddress = _getArgImmediateValue(1);
+        var targetAddress = _getAddress(1);
         var input = io.input(this);
         _saveValueAt(input, targetAddress);
         ip += 2;
@@ -118,7 +118,6 @@ class Computer {
         break;
       
       case OP_JNZ:
-        // var jumpTarget = _getArgImmediateValue(1);
         var condition = _getArgValue(1);
         var jumpTarget = _getArgValue(2);
         if (condition != 0) {
@@ -131,7 +130,6 @@ class Computer {
       case OP_JZ:
         var condition = _getArgValue(1);
         var jumpTarget = _getArgValue(2);
-        // var jumpTarget = _getArgImmediateValue(2);
         if (condition == 0) {
           ip = jumpTarget;
         } else {
@@ -142,8 +140,7 @@ class Computer {
       case OP_LT:
         var a = _getArgValue(1);
         var b = _getArgValue(2);
-        var targetAddress = _getArgImmediateValue(3);
-        // var targetAddress = _getArgValue(1);
+        var targetAddress = _getAddress(3);
         if (a < b) {
           _saveValueAt(1, targetAddress);
         } else {
@@ -155,7 +152,7 @@ class Computer {
       case OP_EQ:
         var a = _getArgValue(1);
         var b = _getArgValue(2);
-        var targetAddress = _getArgImmediateValue(3);
+        var targetAddress = _getAddress(3);
         if (a == b) {
           _saveValueAt(1, targetAddress);
         } else {
@@ -194,13 +191,22 @@ class Computer {
     } else if (mode == MODE_IMMEDIATE) {
       return _getArgImmediateValue(argNum);
     } else if (mode == MODE_RELATIVE) {
-      return _getArgRelativeMode(argNum);
+      return _getArgRelativeValue(argNum);
     } else {
       throw "Unknown mode: $mode";
     }
   }
   int _getArgPositionalValue(int argNum) => memory[memory[ip + argNum]];
   int _getArgImmediateValue(int argNum) => memory[ip + argNum];
-  int _getArgRelativeMode(int argNum) => memory[relativeBase + memory[ip + argNum]];
+  int _getArgRelativeValue(int argNum) => memory[relativeBase + memory[ip + argNum]];
+  int _getAddress(int argNum) {
+    var mode = _getMode(argNum);
+    if (mode == MODE_RELATIVE) {
+      var delta = _getArgImmediateValue(argNum);
+      return relativeBase + delta;
+    } else {
+      return _getArgImmediateValue(argNum);
+    }
+  }
   void _saveValueAt(int value, int address) => memory[address] = value;
 }

@@ -122,7 +122,7 @@ void testComputer(String desc, List<int> program,
   computer.run();
   test(desc, () {
     if (expectedMemory != null) {
-      expect(computer.memory, expectedMemory);
+      expect(computer.memory.take(expectedMemory.length).toList(), expectedMemory);
     }
     if (expectedIP != null) {
       expect(computer.ip, expectedIP);
