@@ -10,36 +10,39 @@ const OP_JNZ = 5;
 const OP_JZ = 6;
 const OP_LT = 7;
 const OP_EQ = 8;
+const OP_MOVE_RELATIVE_BASE = 9;
 const OP_END = 99;
 
 const MODE_POSITION = 0;
 const MODE_IMMEDIATE = 1;
+const MODE_RELATIVE = 2;
 
 abstract class IO {
-  int input();
-  void output(int value);
+  int input(Computer computer);
+  void output(Computer computer, int value);
 }
 
 class RealIO extends IO {
   @override
-  int input() => int.parse(stdin.readLineSync(encoding: Encoding.getByName('utf-8')));
+  int input(Computer computer) => int.parse(stdin.readLineSync(encoding: Encoding.getByName('utf-8')));
 
   @override
-  void output(int value) => print(value);
+  void output(Computer computer, int value) => print(value);
 }
 
 class TestIO extends IO {
   var toInput = 0;
-  var lastOutput = 0;
+  var outputs = <int>[];
+  int get lastOutput => outputs.last;
 
   TestIO({this.toInput});
 
   @override
-  int input() => toInput;
+  int input(Computer computer) => toInput;
   
 
   @override
-  void output(int value) => lastOutput = value;
+  void output(Computer computer, int value) => outputs.add(value);
 }
 
 
@@ -48,22 +51,38 @@ class Computer {
   int ip; // instruction pointer
   List<int> memory;
   IO io;
-  bool suspended = false;
+  bool _suspended = false;
+  bool _done = false;
+  int _relativeBase = 0;
 
-  Computer(this.memory, {debug: false, IO io}) {
+  Computer(List<int> code, {debug: false, IO io, memorySize: 10000}) {
+    this.memory = List.filled(memorySize, 0);
+    for(var i=0; i < code.length; i++) {
+      memory[i] = code[i];
+    }
     this._debug = debug;
     this.io = io != null ? io : RealIO();
     ip = 0;
   }
 
   void run() {
-    while(!suspended && tick());
+    _suspended = false;
+    while(!_suspended && tick());
   }
+
+  void suspend() {
+    _suspended = true;
+  }
+
+  bool get suspended => _suspended;
+  bool get done => _done;
+  int get relativeBase => _relativeBase;
 
   bool tick() {
     var opcode = _getOpCode();
     if (opcode == OP_END) {
       if (_debug) print('Finished.');
+      _done = true;
       return false;
     }
 
@@ -88,13 +107,13 @@ class Computer {
 
       case OP_INPUT:
         var targetAddress = _getArgImmediateValue(1);
-        var input = io.input();
+        var input = io.input(this);
         _saveValueAt(input, targetAddress);
         ip += 2;
         break;
 
       case OP_OUTPUT:
-        io.output(_getArgValue(1));
+        io.output(this, _getArgValue(1));
         ip += 2;
         break;
       
@@ -144,6 +163,12 @@ class Computer {
         }
         ip += 4;
         break;
+      
+      case OP_MOVE_RELATIVE_BASE:
+        var a = _getArgValue(1);
+        _relativeBase += a;
+        ip += 2;
+        break;
 
       default:
         throw "Unknown opcode: $opcode";
@@ -168,11 +193,14 @@ class Computer {
       return _getArgPositionalValue(argNum);
     } else if (mode == MODE_IMMEDIATE) {
       return _getArgImmediateValue(argNum);
+    } else if (mode == MODE_RELATIVE) {
+      return _getArgRelativeMode(argNum);
     } else {
       throw "Unknown mode: $mode";
     }
   }
   int _getArgPositionalValue(int argNum) => memory[memory[ip + argNum]];
   int _getArgImmediateValue(int argNum) => memory[ip + argNum];
+  int _getArgRelativeMode(int argNum) => memory[relativeBase + memory[ip + argNum]];
   void _saveValueAt(int value, int address) => memory[address] = value;
 }
