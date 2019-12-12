@@ -14,7 +14,7 @@ packages:
       name: analyzer
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.39.2"
+    version: "0.39.2+1"
   args:
     dependency: transitive
     description:
@@ -44,7 +44,7 @@ packages:
     source: hosted
     version: "1.1.2"
   collection:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: collection
       url: "https://pub.dartlang.org"
@@ -78,6 +78,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.16.1"
+  decimal:
+    dependency: "direct main"
+    description:
+      name: decimal
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.5"
   glob:
     dependency: transitive
     description:
@@ -225,6 +232,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.2"
+  rational:
+    dependency: transitive
+    description:
+      name: rational
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.3.6"
   shelf:
     dependency: transitive
     description:

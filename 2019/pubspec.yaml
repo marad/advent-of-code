@@ -3,3 +3,5 @@ name: aoc2019
 dependencies:
   test: ^1.9.3
   trotter: ^1.0.2
+  decimal: ^0.3.5
+  collection: ^1.14.12
