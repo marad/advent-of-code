@@ -39,7 +39,7 @@ class Map {
     return Map(desc, asteroids, width, height);
   }
 
-  bool contains(int x, int y) {
+  bool containsPoint(int x, int y) {
     return x >= 0 && y >= 0 && x < _width && y < _height;
   }
 
@@ -75,29 +75,48 @@ int gcd(int a, int b) {
   return a;
 }
 
-int countVisibleAsteroids(int x, int y, Map map) {
-  var asteroids = map.asteroids..remove(Asteroid(x, y));
-  var result = Set.from(asteroids);
-  for(var candidate in asteroids) {
-    var dx = candidate.x - x;
-    var dy = candidate.y - y;
+class LineOfSight {
+  final Asteroid source;
+  final int dx;
+  final int dy;
+  LineOfSight(this.source, this.dx, this.dy);
+  factory LineOfSight.from(Asteroid source, Asteroid target) {
+    var dx = target.x - source.x;
+    var dy = target.y - source.y;
     var divisor = gcd(dx.abs(), dy.abs());
-    dx = dx ~/ divisor;
-    dy = dy ~/ divisor;
+    return LineOfSight(source, dx ~/ divisor, dy ~/ divisor);
+  }
 
-    var a = candidate.x + dx;
-    var b = candidate.y + dy;
+  List<Asteroid> getShadowedAsteroids(Asteroid shadowing, Map map) {
+    Set<Asteroid> asteroids = map.asteroids..remove(source);
+    List<Asteroid> result = [];
+    var a = shadowing.x + dx;
+    var b = shadowing.y + dy;
     while(true) {
-      if (map.contains(a, b)) {
-        result.remove(Asteroid(a, b));
+      var candidate = Asteroid(a, b);
+      if (map.containsPoint(a, b)) {
+        if (asteroids.contains(candidate)) {
+          result.add(candidate);
+        }
         a += dx;
         b += dy;
       } else {
         break;
       }
     }
+    return result;
   }
-  return result.length;
+}
+
+Set<Asteroid> getVisibleAsteroids(int x, int y, Map map) {
+  var monitoringStation = Asteroid(x, y);
+  var asteroids = map.asteroids..remove(monitoringStation);
+  Set<Asteroid> result = Set.from(asteroids);
+  for(var candidate in asteroids) {
+    var los = LineOfSight.from(monitoringStation, candidate);
+    result.removeAll(los.getShadowedAsteroids(candidate, map));
+  }
+  return result;
 }
 
 class Result {
@@ -111,7 +130,7 @@ Result findBesetAsteroid(Map map) {
   Asteroid bestAsteroid = null;
   int visibleCount = -1;
   asteroids.forEach((asteroid) {
-    var count = countVisibleAsteroids(asteroid.x, asteroid.y, map);
+    var count = getVisibleAsteroids(asteroid.x, asteroid.y, map).length;
     if (count > visibleCount) {
       bestAsteroid = asteroid;
       visibleCount = count;

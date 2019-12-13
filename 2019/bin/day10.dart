@@ -4,7 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'dart:math';
 import 'dart:core';
 
-var desc = """
+var desc2 = """
 ....#.....#.#...##..........#.......#......
 .....#...####..##...#......#.........#.....
 .#.#...#..........#.....#.##.......#...#..#
@@ -50,19 +50,44 @@ var desc = """
 ........................#....##..#........#
 """.trimLines();
 
+var desc = """
+.#..##.###...#######
+##.############..##.
+.#.######.########.#
+.###.#######.####.#.
+#####.##.#.##.###.##
+..#####..#.#########
+####################
+#.####....###.#.#.##
+##.#################
+#####.##.###..####..
+..######..##.#######
+####.##.####...##..#
+.#####..#.######.###
+##...#.##########...
+#.##########.#######
+.####.#.###.###.#.##
+....##.##.###..#####
+.#.#.###########.###
+#.#.#.#####.####.###
+###.##.####.##.#..##""".trimLines();
+
 class AsteroidInfo {
   final Asteroid asteroid;
   final int distance; // distance from monitoring station
-  final double angle;
+  final int angle;
 
   AsteroidInfo(this.asteroid, this.distance, this.angle);
 
   factory AsteroidInfo.from(Asteroid monitoringStation, Asteroid target) {
     var distance = (monitoringStation.x - target.x).abs() + (monitoringStation.y - target.y).abs();
     var top = Asteroid(monitoringStation.x, monitoringStation.y - 1);
+    // var angle = getAngle(target, monitoringStation, top);
     var angle = getAngle(target, monitoringStation, top);
+    angle = angle < 0 ? angle + pi * 2 : angle;
+    var intang = (angle * 100000).toInt();
 
-    return AsteroidInfo(target, distance, angle < 0 ? angle + pi * 2 : angle);
+    return AsteroidInfo(target, distance, intang);
   }
 
 }
@@ -74,14 +99,38 @@ double getAngle(Asteroid a, Asteroid b, Asteroid c) {
   return atan2(c.y - b.y, c.x - b.x) - atan2(a.y-b.y, a.x-b.x);
 }
 
+int byDistance(AsteroidInfo a, AsteroidInfo b) {
+  return a.distance.compareTo(b.distance);
+}
+
 void main() {
   var map = Map.fromDesc(desc);
   var result = findBesetAsteroid(map);
   print('Best asteroid: ${result.asteroid}, ${result.visibleCount} others visible');
 
 
-  var monitoringStation = Asteroid(30,34);
+  var monitoringStation = result.asteroid;
   var asteroids = map.asteroids.map((it) => AsteroidInfo.from(monitoringStation, it)).toList();
-  var grouped = groupBy(asteroids, (AsteroidInfo info) => info.angle);
-  print(grouped.keys);
+  var groups = groupBy(asteroids, (AsteroidInfo info) => info.angle)
+    .map((angle, asteroids) {
+      return MapEntry(angle, asteroids..sort(byDistance));
+    });
+  print('Asteroids: ${asteroids.length}');
+  print('Groups: ${groups.length}');
+
+  var angles = groups.keys.toList()..sort();
+  // print(angles);
+
+  var currentAngleIndex = 0;
+  var currentAsteroid = 0;
+  while(true) {
+    var angle = angles[currentAngleIndex];
+    var asteroidGroup = groups[angle];
+    if (asteroidGroup.length > 0) {
+      currentAsteroid += 1;
+      var info = asteroidGroup.removeAt(0);
+      print('Vaporized asteroid #$currentAsteroid: ${info.asteroid}');
+      currentAngleIndex += 1;
+    }
+  }
 }
