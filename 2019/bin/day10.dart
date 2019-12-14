@@ -95,17 +95,13 @@ class AsteroidInfo {
 // TODO: group and sort by angle, then by distance
 // for each laser rotation it destroys first asteroid in each group
 
-double getAngle(Asteroid a, Asteroid b, Asteroid c) {
-  return atan2(c.y - b.y, c.x - b.x) - atan2(a.y-b.y, a.x-b.x);
-}
-
 int byDistance(AsteroidInfo a, AsteroidInfo b) {
   return a.distance.compareTo(b.distance);
 }
 
 void main() {
-  var map = Map.fromDesc(desc);
-  var result = findBesetAsteroid(map);
+  var map = SpaceMap.fromDesc(desc2);
+  var result = findBestAsteroid(map);
   print('Best asteroid: ${result.asteroid}, ${result.visibleCount} others visible');
 
 

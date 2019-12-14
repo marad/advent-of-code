@@ -1,3 +1,4 @@
+import 'dart:math';
 
 class Asteroid {
   int _x;
@@ -12,6 +13,11 @@ class Asteroid {
     return "($_x, $_y)";
   }
 
+  void move(int dx, int dy) {
+    this._x += dx;
+    this._y += dy;
+  }
+
   @override
   int get hashCode => _x.hashCode ^ _y.hashCode;
 
@@ -20,7 +26,7 @@ class Asteroid {
       other is Asteroid && this._x == other._x && this._y == other._y;
 }
 
-class Map {
+class SpaceMap {
   final String _desc;
   final Set<Asteroid> _asteroids;
   final int _width;
@@ -29,14 +35,14 @@ class Map {
   int get height => _height;
   Set<Asteroid> get asteroids => Set.from(_asteroids);
 
-  Map(this._desc, this._asteroids, this._width, this._height);
+  SpaceMap(this._desc, this._asteroids, this._width, this._height);
 
-  factory Map.fromDesc(String desc) {
+  factory SpaceMap.fromDesc(String desc) {
     var asteroids = _readAsteroids(desc);
     var lines = desc.split("\n");
     var width = lines[0].length;
     var height = lines.length;
-    return Map(desc, asteroids, width, height);
+    return SpaceMap(desc, asteroids, width, height);
   }
 
   bool containsPoint(int x, int y) {
@@ -87,7 +93,7 @@ class LineOfSight {
     return LineOfSight(source, dx ~/ divisor, dy ~/ divisor);
   }
 
-  List<Asteroid> getShadowedAsteroids(Asteroid shadowing, Map map) {
+  List<Asteroid> getShadowedAsteroids(Asteroid shadowing, SpaceMap map) {
     Set<Asteroid> asteroids = map.asteroids..remove(source);
     List<Asteroid> result = [];
     var a = shadowing.x + dx;
@@ -108,8 +114,7 @@ class LineOfSight {
   }
 }
 
-Set<Asteroid> getVisibleAsteroids(int x, int y, Map map) {
-  var monitoringStation = Asteroid(x, y);
+Set<Asteroid> getVisibleAsteroids(Asteroid monitoringStation, SpaceMap map) {
   var asteroids = map.asteroids..remove(monitoringStation);
   Set<Asteroid> result = Set.from(asteroids);
   for(var candidate in asteroids) {
@@ -119,24 +124,51 @@ Set<Asteroid> getVisibleAsteroids(int x, int y, Map map) {
   return result;
 }
 
+double getAngle(Asteroid a, Asteroid b, Asteroid c) {
+  return (atan2(c.y - b.y, c.x - b.x) - atan2(a.y-b.y, a.x-b.x)) * 180 / pi;
+}
+
+
 class Result {
   final Asteroid asteroid;
   final int visibleCount;
   Result(this.asteroid, this.visibleCount);
 }
 
-Result findBesetAsteroid(Map map) {
+Result findBestAsteroid(SpaceMap map) {
   var asteroids = map.asteroids;
   Asteroid bestAsteroid = null;
   int visibleCount = -1;
   asteroids.forEach((asteroid) {
-    var count = getVisibleAsteroids(asteroid.x, asteroid.y, map).length;
+    var count = getVisibleAsteroids(asteroid, map).length;
     if (count > visibleCount) {
       bestAsteroid = asteroid;
       visibleCount = count;
     }
   });
   return Result(bestAsteroid, visibleCount);
+}
+
+Asteroid getNthVaporizedAsteroid(int nth, SpaceMap map) {
+  print('finding best...');
+  var best = findBestAsteroid(map).asteroid;
+  print('listing visible asteroids...');
+  var visible = getVisibleAsteroids(best, map);
+
+  var top = Asteroid(best.x, best.y - 1);
+  var groups = Map<double, List<Asteroid>>();
+  for(var asteroid in visible) {
+    // var los = LineOfSight.from(best, asteroid);
+    // var shadowed = los.getShadowedAsteroids(asteroid, map);
+    var shadowed = <Asteroid>[];
+    var angle = getAngle(top, best, asteroid);
+    if (angle < 0) {
+      angle += 2 * pi;
+    }
+    groups[angle] = shadowed..insert(0, asteroid);
+  }
+  var angles = groups.keys.toList()..sort();
+  return groups[angles[nth-1]].first;
 }
 
 extension Trimmer on String {
