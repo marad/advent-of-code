@@ -13,13 +13,13 @@
         },
         {
             "name": "Current Test",
-            "program": "./test/day10_test.dart",
+            "program": "./test/day14_test.dart",
             "request": "launch",
             "type": "dart",
         },
         {
             "name": "Current Bin",
-            "program": "bin/day10.dart",
+            "program": "bin/day14.dart",
             "request": "launch",
             "type": "dart",
         },
