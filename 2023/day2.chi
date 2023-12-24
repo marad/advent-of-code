@@ -1,0 +1,116 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/lang.interop as iop
+
+
+val prod = load("aoc-23/input2.txt")
+val test = load("aoc-23/test2.txt")
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+data Draw(red: int, green: int, blue: int)
+data Game(id: int, draws: array[Draw])
+
+fn splitOnIgnoreWs(line: string, splitter: string): array[string] {
+    line.split("\\s*$splitter\\s*")
+}
+
+fn parseGame(line: string): Game {
+    val tmp = line.splitOnIgnoreWs(":")
+    val gameId = tmp[0].split(" ")[1] as int
+    val drawStrings = tmp[1].splitOnIgnoreWs(";")
+    val draws = drawStrings.map({ def: string -> 
+        val tmp2 = def.splitOnIgnoreWs(",")
+        var r = 0
+        var g = 0
+        var b = 0
+        tmp2.forEach({ it: string ->
+            val tmp3 = it.split(" ")
+            val amout = tmp3[0] as int
+            val color = tmp3[1]
+            when {
+                color == "red" -> r = amout
+                color == "green" -> g = amout
+                color == "blue" -> b = amout
+            }
+        })
+        Draw(r, g, b)
+    })
+    Game(gameId, draws)
+}
+
+fn isPossibleWith(draw: Draw, r:int, g:int, b:int): bool {
+    draw.red <= r && draw.green <= g && draw.blue <= b
+}
+
+fn all[T](arr: array[T], predicate: (T) -> bool): bool {
+    var result = true
+    var i = 0
+    while(i < arr.size()) {
+        if (!predicate(arr[i])) {
+            result = false
+            break
+        }
+        i+=1
+    }
+    result
+}
+
+
+fn part1(lines: array[string]): int {
+    var result = 0
+    var i = 0
+    val games = lines.map({ it: string -> it.parseGame() })
+    while(i < games.size()) {
+        val game = games[i]
+        if (game.draws.all({ draw: Draw -> draw.isPossibleWith(12, 13, 14) })) {
+            result += game.id
+        }
+        i+=1
+    }
+    result
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+
+fn minimalSet(game: Game): Draw {
+    var minR = 0
+    var minG = 0
+    var minB = 0
+    game.draws.forEach({ it: Draw -> 
+        minR = math.max(it.red, minR)
+        minG = math.max(it.green, minG)
+        minB = math.max(it.blue, minB)
+    })
+    Draw(minR, minG, minB)
+}
+
+fn power(draw: Draw): int {
+    draw.red * draw.green * draw.blue
+}
+
+fn part2(lines: array[string]): int {
+    var result = 0
+    var i = 0
+    val games = lines.map({ it: string -> it.parseGame() })
+    while(i < games.size()) {
+        val game = games[i]
+        val minSet = game.minimalSet()
+        val power = minSet.power()
+        //println("${game.id}: $minSet -> $power")
+        result += power
+        i+=1
+    }
+    result
+}
+
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")

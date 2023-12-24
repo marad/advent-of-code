@@ -1,0 +1,140 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+import aoc/point { Point }
+import aoc/tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/lang.unsafe { array as unsafeArray }
+
+
+val prod = load("aoc-23/input16.txt").trim()
+val test = load("aoc-23/test16.txt").trim()
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+data BeamRoot(tile: Point, dir: Direction)
+
+fn from(input: Input): TileMap[int] { 
+    val width = input.width()
+    val height = input.height()
+    val size = width * height
+    val map = array[int](size, 0)
+    TileMap(map, width, height, size)
+}
+
+fn follow(beamRoot: BeamRoot, branchQueue: FiloQueue[BeamRoot], energized: TileMap, input: Input) {
+    var currentTile = beamRoot.tile
+    var currentDir = beamRoot.dir
+
+    val visitedTiles = setOf[string]()
+
+    while (energized.contains(currentTile)) {
+        // mark tile as energized
+        energized.set(currentTile, 1)
+
+        val ch = input.get(currentTile)
+        if (ch != ".") {
+            val tileId = "${currentTile.x},${currentTile.y},$currentDir"
+            if (visitedTiles.contains(tileId)) {
+                // we are in the loop!
+                break
+            }
+            visitedTiles.add(tileId)
+        }
+        when {
+            ch == "-" -> {
+                if (currentDir == Up || currentDir == Down) { 
+                    val splitRoot = BeamRoot(currentTile.apply(Right), Right)
+                    branchQueue.push(splitRoot)
+                    currentDir = Left
+                }
+            }
+            ch == "|" -> {
+                if (currentDir == Left || currentDir == Right) {
+                    val splitRoot = BeamRoot(currentTile.apply(Down), Down)
+                    branchQueue.push(splitRoot)
+                    currentDir = Up
+                }
+            }
+            ch == "/" -> {
+                when {
+                    currentDir == Left -> currentDir = Down
+                    currentDir == Down -> currentDir = Left
+                    currentDir == Right -> currentDir = Up
+                    currentDir == Up -> currentDir = Right
+                }
+            }
+            ch == "\\" -> {
+                when {
+                    currentDir == Left -> currentDir = Up
+                    currentDir == Up -> currentDir = Left
+                    currentDir == Right -> currentDir = Down
+                    currentDir == Down -> currentDir = Right
+                }
+            }
+        }
+
+        // move to next tile
+        currentTile.move(currentDir)
+
+    }
+}
+
+
+fn part1(lines: array[string], initialBeamRoot: BeamRoot): int {
+    val input = Input(lines)
+    val energized = from(input)
+    val rootQueue = filo.of(initialBeamRoot)
+    val pastBeams = setOf[string]()
+    while (rootQueue.size() > 0) {
+        val beamRoot = rootQueue.pop()
+        if (beamRoot is Just) {
+            val root = (beamRoot.value as BeamRoot)
+            val id = "${root.tile.x},${root.tile.y},${root.dir}"
+            if (pastBeams.contains(id)) {
+                continue
+            } else {
+                (beamRoot.value as BeamRoot).follow(rootQueue, energized, input)
+                pastBeams.add(id)
+            }
+
+        } else {
+            break
+        }
+    }
+    energized.map.sum()
+}
+
+println("Part 1 (test): ${part1(tlines, BeamRoot(Point(0,0), Right))}")
+println("Part 1 (prod): ${part1(plines, BeamRoot(Point(0,0), Right))}")
+
+fn part2(lines: array[string]): int {
+    var largest = 0
+    var y = 0
+    while (y <= lines.size()) {
+        val fromLeft = part1(lines, BeamRoot(Point(0, y), Right))
+        val fromRight = part1(lines, BeamRoot(Point(lines[0].length()-1, y), Left))
+        largest = math.max(largest, math.max(fromLeft, fromRight))
+        y += 1
+    }
+
+    var x = 0
+    while (x <= lines[0].length()) {
+        val fromTop = part1(lines, BeamRoot(Point(x, 0), Down))
+        val fromBottom = part1(lines, BeamRoot(Point(x, lines.size()-1), Up))
+        largest = math.max(largest, math.max(fromTop, fromBottom))
+        x += 1
+    }
+
+    largest
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")
+0

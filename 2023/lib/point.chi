@@ -1,0 +1,81 @@
+package aoc/point
+
+import aoc/direction { Direction, Up, Down, Left, Right }
+import std/math as math
+
+data pub Point(pub x:int, pub y: int)
+
+pub fn up(p: Point): Point { Point(p.x, p.y-1) }
+pub fn down(p: Point): Point { Point(p.x, p.y+1) }
+pub fn left(p: Point): Point { Point(p.x-1, p.y) }
+pub fn right(p: Point): Point { Point(p.x+1, p.y) }
+
+pub fn up(p: Point, dist: int): Point { Point(p.x, p.y-dist) }
+pub fn down(p: Point, dist: int): Point { Point(p.x, p.y+dist) }
+pub fn left(p: Point, dist: int): Point { Point(p.x-dist, p.y) }
+pub fn right(p: Point, dist: int): Point { Point(p.x+dist, p.y) }
+
+pub fn moveUp(p: Point) { p.y = (p.y - 1) }
+pub fn moveDown(p: Point) { p.y = (p.y + 1) }
+pub fn moveLeft(p: Point) { p.x = (p.x - 1) }
+pub fn moveRight(p: Point) { p.x = (p.x + 1) }
+
+pub fn moveUp(p: Point, dist: int) { p.y = (p.y - dist) }
+pub fn moveDown(p: Point, dist: int) { p.y = (p.y + dist) }
+pub fn moveLeft(p: Point, dist: int) { p.x = (p.x - dist) }
+pub fn moveRight(p: Point, dist: int) { p.x = (p.x + dist) }
+
+pub fn apply(p: Point, dir: Direction): Point {
+    when {
+        dir == Up -> p.up()
+        dir == Down -> p.down()
+        dir == Left -> p.left()
+        dir == Right -> p.right()
+        else -> p
+    }
+}
+
+pub fn apply(p: Point, dir: Direction, dist: int): Point {
+    when {
+        dir == Up -> p.up(dist)
+        dir == Down -> p.down(dist)
+        dir == Left -> p.left(dist)
+        dir == Right -> p.right(dist)
+        else -> p
+    }
+}
+
+pub fn move(p: Point, dir: Direction) {
+    when {
+        dir == Up -> p.moveUp()
+        dir == Down -> p.moveDown()
+        dir == Left -> p.moveLeft()
+        dir == Right -> p.moveRight()
+    }
+}
+
+pub fn move(p: Point, dir: Direction, dist: int) {
+    when {
+        dir == Up -> p.moveUp(dist)
+        dir == Down -> p.moveDown(dist)
+        dir == Left -> p.moveLeft(dist)
+        dir == Right -> p.moveRight(dist)
+    }
+}
+
+pub fn manhattanDistance(a: Point, b: Point): int {
+    math.abs(a.x - b.x) + math.abs(a.y - b.y)
+}
+
+pub fn chebyshevDistance(a: Point, b: Point): int {
+    math.max(math.abs(a.x - b.x), math.abs(a.y - b.y))
+}
+
+pub fn minus(a: Point, b: Point): Point {
+    Point(a.x-b.x, a.y-b.y)
+}
+
+pub fn plus(a: Point, b: Point): Point {
+    Point(a.x+b.x, a.y+b.y)
+}
+

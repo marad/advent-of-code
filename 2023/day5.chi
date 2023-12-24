@@ -1,0 +1,106 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/math.bigdecimal as bd { BigDecimal}
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+
+
+val prod = load("aoc-23/input5.txt")
+val test = load("aoc-23/test5.txt")
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+data Range(from: BigDecimal, to: BigDecimal)
+data Mapping(range: Range, offset: BigDecimal)
+
+// Range stuff
+fn contains(range: Range, value: BigDecimal): bool {
+    range.from.lte(value) && value.lt(range.to)
+}
+
+
+// Mapping stuff
+fn mapValue(mapping: Mapping, value: BigDecimal): Option[BigDecimal] {
+    if (mapping.range.contains(value)) {
+        Just(value.add(mapping.offset))
+    } else {
+        Nothing
+    }
+}
+
+fn mapValue(mappings: ArrayList[Mapping], value: BigDecimal): BigDecimal {
+    var result = Nothing
+    mappings.map({it:Mapping -> result = result.or(it.mapValue(value))})
+    result.or(Just(value))
+}
+
+fn parseMap(lines: array[string], fromLine: int): Pair[ArrayList[Mapping],int] {
+    var i = fromLine
+    var line = ""
+    val ranges = newArrayList[Mapping]()
+    while (i < lines.size() && !(line = lines[i]).isBlank()) {
+        val tmp = line.trim().split(" ")
+        val dst = bd.of(tmp[0])
+        val src = bd.of(tmp[1])
+        val len = bd.of(tmp[2])
+
+        val from = src
+        val to = src.add(len)
+        val offset = dst.subtract(src)
+
+        ranges.add(Mapping(Range(from, to), offset))
+        i+=1
+    }
+    Pair(ranges, i)
+}
+
+
+fn parseMaps(lines: array[string]): ArrayList[ArrayList[Mapping]] {
+    var i = 3
+    val result = newArrayList[ArrayList[Mapping]]()
+    while(i < lines.size()) {
+        val out = lines.parseMap(i)
+        result.add(out.left)
+        i = out.right + 2
+    }
+    result
+}
+
+fn part1(lines: array[string]): int {
+    val seeds = lines[0].trim().split(": ")[1].split(" ").map({it:string -> bd.of(it)})
+    val mappings = lines.parseMaps()
+
+    seeds.forEach({ seed: BigDecimal -> 
+        var value = seed
+        mappings.forEach({ it: ArrayList[Mapping] ->
+            value = it.mapValue(value)
+        })
+        println(value)
+    })
+    0
+}
+
+
+part1(tlines)
+
+// data RangeOverlapType = Contains | IsContainedIn | FromLeft | FromRight | None
+// fn overlapType(a: Range, b: Range): RangeOverlapType {
+//     if (a.from.)
+// }
+
+
+
+val range = Range(bd.of(5), bd.of(10))
+val mapping = Mapping(range, bd.of(10))
+
+println(mapping.mapValue(bd.of(7)))
+println(mapping.mapValue(bd.of(2)))
+
+val mappings = parseMaps(tlines)
+
+println(mappings)
+
+0

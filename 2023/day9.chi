@@ -1,0 +1,67 @@
+
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+
+
+val prod = load("aoc-23/input9.txt")
+val test = load("aoc-23/test9.txt")
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+fn parseHistory(line: string): array[int] {
+    line.split(" ").map({it:string -> it as int})
+}
+
+fn calcDifs(history: array[int]): array[int] {
+    val result = array(history.size()-1, 0)
+    var i = 0
+    while (i < result.size()) {
+        val a = history[i+1]
+        val b = history[i]
+        val x = a - b
+        result[i] = x
+        i+=1
+    }
+    result
+}
+
+fn predict_next(history: array[int]): int {
+    if (history.all({ it:int -> it == 0 })) {
+        0
+    } else {
+        history.last().unwrap() + predict_next(history.calcDifs())
+    }
+}
+
+val r = predict_next(tlines[0].parseHistory())
+
+fn part1(lines: array[string]): int {
+    val histories = lines.map(parseHistory)
+    var sum = 0
+    histories.forEach({ history: array[int] ->
+        sum += history.predict_next()
+    })
+    sum
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+
+fn part2(lines: array[string]): int {
+    val histories = lines.map(parseHistory).map({it:array[int] -> it.reverse() })
+    var sum = 0
+    histories.forEach({ history: array[int] ->
+        sum += history.predict_next()
+    })
+    sum
+}
+
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")

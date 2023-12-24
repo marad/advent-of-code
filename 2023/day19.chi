@@ -1,0 +1,277 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
+import std/lang.unsafe { array as unsafeArray }
+import std/lang.interop as iop
+
+val maxInt = 9223372036854775807
+
+val prod = load("aoc-23/input19.txt").trim()
+val test = load("aoc-23/test19.txt").trim()
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+val tinput = Input(tlines)
+val pinput = Input(plines)
+
+data Part(x: int, m: int, a: int, s: int)
+
+fn parsePart(line: string): Part {
+    val tmp = line.replaceAll("[xmas={}]*","").split(",").map({it:string -> it as int})
+    Part(tmp[0], tmp[1], tmp[2], tmp[3])
+}
+
+fn minX(value: int): (Part) -> bool { { part: Part -> part.x > value } }
+fn maxX(value: int): (Part) -> bool { { part: Part -> part.x < value } }
+
+fn minM(value: int): (Part) -> bool { { part: Part -> part.m > value } }
+fn maxM(value: int): (Part) -> bool { { part: Part -> part.m < value } }
+
+fn minA(value: int): (Part) -> bool { { part: Part -> part.a > value } }
+fn maxA(value: int): (Part) -> bool { { part: Part -> part.a < value } }
+
+fn minS(value: int): (Part) -> bool { { part: Part -> part.s > value } }
+fn maxS(value: int): (Part) -> bool { { part: Part -> part.s < value } }
+
+fn min(t: string, value: int): (Part) -> bool {
+    when {
+        t == "x" -> minX(value)
+        t == "m" -> minM(value)
+        t == "a" -> minA(value)
+        else -> minS(value)
+    }
+}
+
+fn max(t: string, value: int): (Part) -> bool {
+    when {
+        t == "x" -> maxX(value)
+        t == "m" -> maxM(value)
+        t == "a" -> maxA(value)
+        else -> maxS(value)
+    }
+}
+
+fn accept(p: Part): bool { true }
+
+data Instr(cond: (Part) -> bool, ruleName: string)
+data Rule(name: string, instrs: ArrayList[Instr])
+
+fn parseRule(line: string): Rule {
+    val start = line.indexOf("{")
+    val name = line.substring(0, start)
+    val instrs = newArrayList[Instr]()
+
+    val defs = line.substring(start+1, line.length() - 2 - start).split(",")
+
+    defs.forEach({ def:string ->
+        when {
+            def.contains(":") -> {
+                val t = def[0]
+                val sign = def[1]
+                val colonIdx = def.indexOf(":")
+                val value = def.substring(2, colonIdx - 2) as int
+                val ruleName = def.substring(colonIdx+1)
+                val instr = if (sign == "<") {
+                    Instr(max(t, value), ruleName)
+                } else {
+                    Instr(min(t, value), ruleName)
+                }
+                instrs.add(instr)
+            }
+            else -> {
+                instrs.add(Instr(accept, def))
+            }
+        }
+    })
+    Rule(name, instrs)
+}
+
+fn nextRuleName(rule: Rule, part: Part): string {
+    var i = 0
+    var nextRuleName = ""
+    while (i < rule.instrs.size()) {
+        val instr = rule.instrs.unsafeGet(i)
+        if ((instr.cond)(part)) {
+            nextRuleName = instr.ruleName
+            break
+        }
+        i += 1
+    }
+    nextRuleName
+}
+
+fn parseInput(lines: array[string]): Pair[Map[string, Rule], ArrayList[Part]] {
+    var i = 0
+    val rules = mapOf[string, Rule]()
+    while(!lines[i].isBlank()) {
+        val rule = lines[i].parseRule()
+        rules.put(rule.name, rule)
+        i += 1
+    }
+
+    var parts = newArrayList[Part]()
+    i += 1
+    while(i < lines.size()) {
+        val part = lines[i].parsePart()
+        parts.add(part)
+        i += 1
+    }
+
+    Pair(rules, parts)
+}
+
+fn partSum(p: Part): int { p.x + p.m + p.a + p.s }
+
+
+fn part1(lines: array[string]): int {
+    val tmp = lines.parseInput()
+    val rules = tmp.left
+    val parts = tmp.right
+
+    var sum = 0
+
+    parts.forEach({ part: Part -> 
+        var rule = (rules as Map[string,string]).get("in").unwrap() as Rule
+        while (true) {
+            val nextName = rule.nextRuleName(part)
+            if (nextName == "A") {
+                sum += part.partSum()
+                break
+            } else if (nextName == "R") {
+                break
+            }
+            rule = (rules as Map[string,string]).get(nextName).unwrap() as Rule
+        }
+    })
+    sum
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+data Instr2(t: string, sign: string, value: int, ruleName: string)
+data Rule2(name: string, instrs: ArrayList[Instr2], fallback: string)
+
+data Range(from: int, to: int)
+
+fn parseRule2(line: string): Rule2 {
+    val start = line.indexOf("{")
+    val name = line.substring(0, start)
+    val instrs = newArrayList[Instr2]()
+
+    val defs = line.substring(start+1, line.length() - 2 - start).split(",")
+
+    var fallback = ""
+
+    defs.forEach({ def:string ->
+        when {
+            def.contains(":") -> {
+                val t = def[0]
+                val sign = def[1]
+                val colonIdx = def.indexOf(":")
+                val value = def.substring(2, colonIdx - 2) as int
+                val ruleName = def.substring(colonIdx+1)
+                instrs.add(Instr2(t, sign, value, ruleName))
+            }
+            else -> {
+                // instrs.add(Instr2("", "", 0, def))
+                fallback = def
+            }
+        }
+    })
+    Rule2(name, instrs, fallback)
+}
+
+fn size(r: Range): int { 
+    r.to - r.from + 1
+}
+
+fn toIndex(s: string): int {
+    when {
+        s == "x" -> 0
+        s == "m" -> 1
+        s == "a" -> 2
+        else -> 3
+    }
+}
+
+fn splitRanges(instr: Instr2, ranges: array[Range]): Pair[array[Range], array[Range]] {
+    val rangeIndex = instr.t.toIndex()
+    val range = ranges[rangeIndex]
+    val acceptedRanges = arrayOf(ranges[0], ranges[1], ranges[2], ranges[3])
+    val rejectedRanges = arrayOf(ranges[0], ranges[1], ranges[2], ranges[3])
+    if (instr.sign == "<") {
+        acceptedRanges[rangeIndex] = Range(range.from, instr.value - 1)
+        rejectedRanges[rangeIndex] = Range(instr.value, range.to)
+    } else {
+        acceptedRanges[rangeIndex] = Range(instr.value + 1, range.to)
+        rejectedRanges[rangeIndex] = Range(range.from, instr.value)
+    }
+
+    Pair(acceptedRanges, rejectedRanges)
+}
+
+
+fn count(ruleName: string, findRule: (string) -> Rule2, ranges: array[Range], prefix: string): int {
+    if (ruleName == "R") {
+        0
+    } else if (ruleName == "A") {
+        var product = 1
+        ranges.forEach({ r: Range -> product *= r.size() })
+        product
+    } else {
+        val rule = findRule(ruleName)
+        var currentRanges = ranges
+        var sum = 0
+        var i = 0
+        while (i < rule.instrs.size()) {
+            val instr = rule.instrs.unsafeGet(i)
+            val split = instr.splitRanges(currentRanges)
+            // split.left is the range accepted by this instruction
+            sum += count(instr.ruleName, findRule, split.left, prefix + "    ")
+            // split.right is the reminder of the ranges - it's left for following instructions
+            currentRanges = split.right
+            i += 1
+        }
+
+        // finally - anything something was not processed before - it's left for the fallback workflow
+        if (currentRanges.size() >= 1) {
+            sum += count(rule.fallback, findRule, currentRanges, prefix + "    ")
+        }
+
+        sum
+    }
+}
+
+
+fn getRule(rules: Map[string, Rule2], name: string): Rule2 {
+    (rules as Map[string, string]).get(name).unwrap() as Rule2
+}
+
+fn part2(lines: array[string]): int {
+    var i = 0
+    val rules = mapOf[string, Rule2]()
+    while (!lines[i].isBlank()) {
+        val rule = lines[i].parseRule2()
+        rules.put(rule.name, rule)
+        i += 1
+    }
+    
+    val ranges = arrayOf(Range(1, 4000), Range(1, 4000), Range(1, 4000), Range(1, 4000))
+    val findRule = { name: string -> rules.getRule(name) }
+    count("in", findRule, ranges, "")
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")
+0

@@ -1,0 +1,406 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/lang.interop as iop { lookupHostSymbol }
+import std/string as str
+import std/math as math
+
+val input = load("aoc-23/input7.txt")
+val test = load("aoc-23/test7.txt")
+
+val lines = input.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+data ArrayList[T](impl: any)
+
+fn arrayListOf[T](): ArrayList[T] {
+    val JavaClass = lookupHostSymbol("java.util.ArrayList")
+    ArrayList(iop.newInstance(JavaClass, arrayOf()))
+}
+
+fn add[T](list: ArrayList[T], el: T): ArrayList[T] {
+    iop.invokeMember(list.impl, "add", arrayOf(el))
+    list
+}
+
+fn get[T](list: ArrayList[T], index: int): Option[T] {
+    val value = iop.invokeMember(list.impl, "get", arrayOf(index))
+    if (iop.isNull(value)) {
+        Nothing
+    } else {
+        Just(value)
+    }
+}
+
+fn getOrDefault[T](list: ArrayList[T], index: int, default: T): T {
+    val value = iop.invokeMember(list.impl, "get", arrayOf(index))
+    if (iop.isNull(value)) {
+        default
+    } else {
+        value as T
+    }
+}
+
+
+fn contains[T](list: ArrayList[T], el: T): bool {
+    iop.invokeMember(list.impl, "contains", arrayOf(el)) as bool
+}
+
+fn isEmpty[T](list: ArrayList[T]): bool {
+    iop.invokeMember(list.impl, "isEmpty", arrayOf()) as bool
+}
+
+fn remove[T](list: ArrayList[T], index: int): ArrayList[T] {
+    iop.invokeMember(list.impl, "remove", arrayOf(index))
+    list
+}
+
+fn clear[T](list: ArrayList[T]): ArrayList[T] {
+    iop.invokeMember(list.impl, "clear", arrayOf())
+    list
+}
+
+fn size[T](list: ArrayList[T]): int {
+    iop.invokeMember(list.impl, "size", arrayOf()) as int
+}
+
+fn toArray[T](list: ArrayList[T]): array[T] {
+    iop.invokeMember(list.impl, "toArray", arrayOf()) as array
+}
+
+
+data Map[K, V](impl: any)
+
+fn mapOf[K, V](): Map[K, V] {
+    val HashMap = lookupHostSymbol("java.util.HashMap")
+    Map(iop.newInstance(HashMap, arrayOf()))
+}
+
+fn put[K,V](m: Map[K, V], key: K, el: V) {
+    iop.invokeMember(m.impl, "put", arrayOf(key, el))
+}
+
+fn get[K,V](m: Map[K,V], key: K): Option[V] {
+    val v = iop.invokeMember(m.impl, "get", arrayOf(key))
+    if (iop.isNull(v)) {
+        Nothing
+    } else {
+        Just(v)
+    }
+}
+
+fn getOrDefault[K,V](m: Map[K,V], key: K, default: V): V {
+    val v = iop.invokeMember(m.impl, "get", arrayOf(key))
+    if (iop.isNull(v)) {
+        default
+    } else {
+        v as V
+    }
+}
+
+fn remove[K,V](m: Map[K,V], key: K) {
+    iop.invokeMember(m.impl, "remove", arrayOf(key))
+}
+
+fn size[K,V](m: Map[K,V]): int {
+    iop.invokeMember(m.impl, "size", arrayOf()) as int
+}
+
+fn keys[K,V](m: Map[K,V]): array[V] {
+    val ks = iop.invokeMember(m.impl, "keySet", arrayOf())
+    ArrayList[K](ks).toArray()
+}
+
+fn values[K,V](m: Map[K,V]): array[V] {
+    val vals = iop.invokeMember(m.impl, "values", arrayOf())
+    ArrayList[V](vals).toArray()
+}
+
+
+fn sort(s: string): string {
+    val cp = s.codePoints()
+    cp.sort()
+    str.fromCodePoints(cp)
+}
+
+
+
+
+// ------------------------------------------------------
+
+data Hand(cards: string, bid: int)
+
+
+fn parseHand(line: string): Hand {
+    val tmp = line.split("\\s+")
+    Hand(tmp[0], tmp[1] as int)
+}
+
+fn stats(handSpec: string): Map[string, int] {
+    val sorted = handSpec.sort()
+    var i = 1
+    var currentCh = sorted[0]
+    var count = 1
+    val result = mapOf[string,int]()
+    while(i < sorted.length()) {
+        val ch = sorted[i]
+        if (ch != currentCh) {
+            result.put(currentCh, count)
+            currentCh = ch
+            count = 1
+        } else {
+            count += 1
+        }
+        i += 1
+    }
+    result.put(currentCh, count)
+    result
+}
+
+data HandType = Five | Four | FullHouse | Three | TwoPair | OnePair | HighCard
+
+fn order(type: HandType): int {
+    when {
+        type == Five -> 7
+        type == Four -> 6
+        type == FullHouse -> 5
+        type == Three -> 4
+        type == TwoPair -> 3
+        type == OnePair -> 2
+        type == HighCard -> 1
+        else -> 0
+    }
+}
+
+fn order1(card: string): int {
+    val ch = card[0]
+    when {
+        ch == "A" -> 13
+        ch == "K" -> 12
+        ch == "Q" -> 11
+        ch == "J" -> 10
+        ch == "T" -> 9
+        ch == "9" -> 8
+        ch == "8" -> 7
+        ch == "7" -> 6
+        ch == "6" -> 5
+        ch == "5" -> 4
+        ch == "4" -> 3
+        ch == "3" -> 2
+        ch == "2" -> 1
+        else -> 0
+    }
+}
+
+fn lt(a: HandType, b: HandType): bool { a.order() < b.order() }
+fn lte(a: HandType, b: HandType): bool { a.order() <= b.order() }
+
+fn type(cards: string): HandType {
+    val stats = cards.stats()
+    if (stats.size() == 5) { HighCard }
+    else if (stats.size() == 1) { Five }
+    else if (stats.size() == 2) {
+        val tmp = stats.values()[0]
+        if (tmp == 1 || tmp == 4) {
+            Four
+        } else {
+            FullHouse
+        }
+    } else if (stats.size() == 3) {
+        val tmp = stats.values()
+        if (tmp[0] == 3 || tmp[1] == 3 || tmp[2] == 3) {
+            Three
+        } else {
+            TwoPair
+        }
+    } else OnePair
+}
+
+fn cmp(a: string, b: string, order: (string) -> int): int {
+    val len = math.min(a.length(), b.length())
+    var i = 0
+    var result = 0
+    while(i < len) {
+        val ap = order(a[i])
+        val bp = order(b[i])
+        if (ap == bp) {
+            i += 1
+            continue
+        } else if (ap < bp) {
+            result = -1
+            break
+        } else if (ap > bp) {
+            result = 1
+            break
+        }
+        i += 1
+    }
+    if (result == 0 && a.length() < b.length()) {
+        -1
+    } else if (result == 0 && a.length() > b.length()) {
+        1
+    } else {
+        result
+    }
+}
+
+fn compareHands(a: string, b: string, cardOrder: (string) -> int): int {
+    val at = a.type()
+    val bt = b.type()
+    if(a == b) {
+        0
+    } else if (at.lt(bt)) {
+        -1
+    } else if (bt.lt(at)) {
+        1
+    } else {
+        a.cmp(b, cardOrder)
+    }
+}
+
+fn bubbleSort(a: array[Hand], cardOrder: (string) -> int) {
+    val asize = a.size()
+    var step = 0
+    while(step < asize - 1) {
+        var i = 0
+        while(i < asize - step - 1) {
+            val cmpr = compareHands(a[i].cards, a[i+1].cards, cardOrder)
+            if (cmpr == 1) {
+                val tmp = a[i]
+                a[i] = (a[i+1])
+                a[i+1] = tmp
+            }
+            i += 1
+        }
+        step += 1
+    }
+}
+
+fn part1(lines: array[string]): int {
+    val hands = lines.map(parseHand)
+    hands.bubbleSort(order1)
+    var i = 0
+    var sum = 0
+    while(i < hands.size()) {
+        val hand = hands[i]
+
+        sum += hand.bid * (i+1)
+
+
+        i += 1
+    }
+    sum
+}
+
+//println("Part 1 (test): ${part1(tlines)}")
+//println("Part 1 (prod): ${part1(lines)}")
+
+// ----------------------------------------------------
+
+fn order2(card: string): int {
+    val ch = card[0]
+    when {
+        ch == "A" -> 14
+        ch == "K" -> 13
+        ch == "Q" -> 12
+        ch == "T" -> 10
+        ch == "9" -> 9
+        ch == "8" -> 8
+        ch == "7" -> 7
+        ch == "6" -> 6
+        ch == "5" -> 5
+        ch == "4" -> 4
+        ch == "3" -> 3
+        ch == "2" -> 2
+        ch == "J" -> 1
+        else -> 0
+    }
+}
+
+
+
+fn swapJoker(cards: string): string {
+    if (cards.contains("J")) {
+        val allCards = array[string](12, "")
+        allCards[0] = "A"
+        allCards[1] = "K"
+        allCards[2] = "Q"
+        allCards[3] = "T"
+        allCards[4] = "9"
+        allCards[5] = "8"
+        allCards[6] = "7"
+        allCards[7] = "6"
+        allCards[8] = "5"
+        allCards[9] = "4"
+        allCards[10] = "3"
+        allCards[11] = "2"
+        var tmp = cards.replaceAll("J", "A")
+        var currentBest = tmp
+
+        var i = 1
+        while(i < allCards.size()) {
+            val joker = allCards[i]
+            val test = cards.replaceAll("J", joker)
+
+            if (test.compareHands(currentBest, order2) == 1) {
+                currentBest = test
+            }
+            i += 1
+        }
+
+        currentBest
+    } else {
+        cards
+    }
+}
+
+fn compareHands2(a: string, b: string, cardOrder: (string) -> int): int {
+    val at = a.swapJoker().type()
+    val bt = b.swapJoker().type()
+    if(a == b) {
+        0
+    } else if (at.lt(bt)) {
+        -1
+    } else if (bt.lt(at)) {
+        1
+    } else {
+        a.cmp(b, cardOrder)
+    }
+}
+
+
+fn bubbleSort2(a: array[Hand], cardOrder: (string) -> int) {
+    val asize = a.size()
+    var step = 0
+    while(step < asize - 1) {
+        var i = 0
+        while(i < asize - step - 1) {
+            val cmpr = compareHands2(a[i].cards, a[i+1].cards, cardOrder)
+            if (cmpr == 1) {
+                val tmp = a[i]
+                a[i] = (a[i+1])
+                a[i+1] = tmp
+            }
+            i += 1
+        }
+        step += 1
+    }
+}
+
+
+fn part2(lines: array[string]): int {
+    val hands = lines.map(parseHand)
+    hands.bubbleSort2(order2)
+    var i = 0
+    var sum = 0
+    while(i < hands.size()) {
+        val hand = hands[i]
+
+        sum += hand.bid * (i+1)
+
+        i += 1
+    }
+    sum
+}
+
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 1 (prod): ${part2(lines)}")

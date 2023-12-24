@@ -1,0 +1,150 @@
+
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.list.linked as fifo { LinkedList, newLinkedList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
+import std/lang.unsafe { array as unsafeArray }
+import std/lang.interop as iop
+
+
+val bricks: array[array[int]] = input.splitOnNewLines().map({it:string ->
+    it.replace("~", ",").split(",").map({s:string -> s as int})
+})
+
+fn bottomUp(a: array[int], b: array[int]): int {
+    a[2] - b[2]
+}
+
+bricks.sort(bottomUp)
+
+
+fn overlaps(a: array[int], b: array[int]): bool {
+     math.max(a[0], b[0]) <= math.min(a[3], b[3]) && math.max(a[1], b[1]) <= math.min(a[4], b[4])
+}
+
+
+// settle blocks
+var i = 0
+while (i < bricks.size()) {
+    val brick: array[int] = bricks[i]
+    var maxZ = 1
+    var j = 0
+    while (j < i) {
+        val other = bricks[j]
+        if (other.overlaps(brick)) {
+            val z = (other[5] + 1)
+            maxZ = math.max(maxZ, z)
+        }
+        j += 1
+    }
+
+    val offset = brick[2] - maxZ
+    brick[5] = ((brick[5]) - offset)
+    brick[2] = maxZ
+
+    i+=1
+}
+
+// sort settled blocks again (some may have fallen below others)
+bricks.sort(bottomUp)
+
+// for each block gather its supporters and blocks that it is supporting
+val supports: array[Set[int]] = unsafeArray[Set[int]](bricks.size())
+val supportedBy: array[Set[int]] = unsafeArray[Set[int]](bricks.size())
+i = 0
+while (i < supports.size()) {
+    supports[i] = setOf[int]()
+    supportedBy[i] = setOf[int]()
+    i += 1
+}
+
+
+i = 0
+while (i < bricks.size()) {
+    val lower = bricks[i]
+    var j = i+1 
+    while (j < bricks.size()) {
+        val upper = bricks[j]
+
+        if (overlaps(upper, lower) && (upper[2]) == (lower[5] + 1)) {
+            supports[i].add(j)
+            supportedBy[j].add(i)
+        }
+
+        j += 1
+    }
+    i += 1
+}
+
+
+// part 1
+i = 0
+var count = 0
+while (i < bricks.size()) {
+    if (supports[i].size() == 0) {
+        count += 1
+    } else {
+        val iter = supports[i].iterator()
+        var canRemove = true
+        while(iter.hasNext()) {
+            val supported = iter.next()
+            val allSupports = supportedBy[supported]
+            if (allSupports.size() == 1) {
+                canRemove = false
+            }
+        }
+
+        if (canRemove) {
+            count += 1
+        }
+    }
+    i += 1
+}
+
+println("Part 1: $count")
+
+// part 2
+
+i = 0
+var wouldFall = 0
+while (i < bricks.size()) {
+
+    val q = newLinkedList[int]()
+    val falling = setOf[int]()
+
+    falling.add(i)
+
+    supports[i].forEach({ b: int -> 
+        if (!falling.contains(b)) { q.add(b) } 
+    })
+
+    while (q.size() > 0) {
+        val bi = q.pop()
+        val shouldFall = (supportedBy[bi]).all({ it:int -> 
+            falling.contains(it) 
+        })
+
+        if (shouldFall) {
+            falling.add(bi)
+            supports[bi].forEach({ b: int -> 
+                if (!falling.contains(b)) { q.add(b) } 
+            })
+        }
+    }
+
+    wouldFall += (falling.size() - 1)
+
+    i += 1
+}
+
+
+println("Part 2: $wouldFall")

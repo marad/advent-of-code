@@ -1,0 +1,251 @@
+
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.list.linked as fifo { LinkedList, newLinkedList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
+import std/lang.unsafe { array as unsafeArray }
+import std/lang.interop as iop
+
+val maxInt = 9223372036854775807
+
+val lines = input.splitOnNewLines()
+
+val s = Point(1, 0)
+val goal = Point(lines[0].length() - 2, lines.size() - 1)
+
+fn part1(): int {
+    val tm = Input(lines).toTileMap()
+    val s = Point(1, 0)
+    val goal = Point(tm.width - 2, tm.height - 1)
+    val dist = tilemap.empty[int](tm.width, tm.height)
+    dist.forEachTDLR({it:Point -> dist.set(it, -maxInt)})
+    dist.set(s, 0)
+
+    val q = newLinkedList[Point]()
+    q.add(s)
+    val visited = setOf[Point]()
+
+    while (q.size() > 0) {
+        val pos = q.pop()
+        if (visited.contains(pos) || !tm.contains(pos)) {
+            continue
+        }
+
+        if (pos == goal) {
+            break
+        }
+
+        val ch = tm.get(pos)
+
+        val neighs = if (ch == ".") {
+            arrayOf(pos.right(), pos.down(), pos.up(), pos.left())
+        } else if (ch == ">") {
+            arrayOf(pos.right())
+        } else if (ch == "<") {
+            arrayOf(pos.left())
+        } else if (ch == "^") {
+            arrayOf(pos.up())
+        } else if (ch == "v") {
+            arrayOf(pos.down())
+        } else {
+            arrayOf[Point]()
+        }
+
+        neighs.forEach({ neigh: Point ->
+            if (tm.contains(neigh) && dist.get(neigh) < dist.get(pos) + 1) {
+                dist.set(neigh, dist.get(pos) + 1)
+            }
+            q.addFirst(neigh)
+        })
+
+        visited.add(pos)
+
+    }
+
+    dist.get(goal)
+}
+
+// println(part1())
+
+fn neighbours(p: Point): array[Point] { arrayOf(p.up(), p.down(), p.left(), p.right() ) }
+
+fn neighbours(p: Point, tm: TileMap[string], visited: TileMap[bool]): ArrayList[Point] {
+    var neighs = newArrayList[Point]()
+    val ns: array[Point] = p.neighbours()
+    var i = 0
+    while (i < ns.size()) {
+        val it = ns[i]
+        if (tm.contains(it) && tm.get(it) != "#") {
+            println("$it -> ${tm.get(it)}")
+            neighs.add(it)
+        }
+        i += 1
+    }
+    neighs
+}
+
+fn findMax(tm: TileMap[string], pos: Point, visited: TileMap[bool], current: int): int {
+    if (pos == goal) {
+        current
+    } else if (tm.contains(pos) && !visited.get(pos) && tm.get(pos) != "#") {
+        visited.set(pos, true)
+        var max = 0
+
+        var currentPos = pos
+        var currentDist = current
+
+        // follow the path
+        var neighs = currentPos.neighbours(tm, visited)
+        while (neighs.size() == 1) {
+            val currentPos = neighs.get(0).unwrap()
+            visited.set(currentPos, true)
+            neighs = currentPos.neighbours(tm, visited)
+            currentDist += 1
+        }
+
+        // pos.neighbours().forEach({ it: Point ->
+        //     val dist = findMax(tm, it, visited, current + 1)
+        //     max = math.max(max, dist)
+        // })
+        visited.set(pos, false)
+        max
+    } else {
+        0
+    }
+}
+
+
+data Node(pos: Point, dist: int)
+
+fn part2(): int {
+    val tm = Input(lines).toTileMap()
+    val visited = tilemap.empty[bool](tm.width, tm.height)
+    visited.forEachTDLR({it:Point -> visited.set(it, false)})
+
+    val points = newArrayList[Point]()
+    points.add(s)
+    points.add(goal)
+
+    tm.forEachTDLR({it:Point -> 
+
+        if (tm.get(it) != "#") {
+
+            val neighs = it.neighbours()
+            var count = 0
+            var i = 0
+            while (i < neighs.size()) {
+                val n = neighs[i]
+                if (tm.contains(n) && (tm.get(n)) != "#") {
+                    if (it == Point(6, 2)) {
+                        println(n)
+                        println(tm.get(n))
+                    }
+                    count += 1
+                }
+                i += 1
+            }
+
+            if (count >= 3) {
+                points.add(it)
+            }
+        }
+    
+    })
+
+    val graph = mapOf[Point, Map[Point, int]]()
+
+    points.forEach({ pos: Point -> 
+        val stack = newLinkedList[Node]()
+        stack.add(Node(pos, 0))
+        val seen = setOf[Point](pos)
+
+        while (stack.size() > 0) {
+            val node = stack.pop()
+
+            if (node.dist != 0 && points.contains(node.pos)) {
+                // println("reached ${node.pos} in ${node.dist} steps")
+
+                val a = graph.getOrDefault(pos, mapOf[Point,int]())
+                a.put(node.pos, node.dist)
+                graph.put(pos, a)
+
+                continue
+            }
+
+            val ch = tm.get(node.pos)
+            // val dirs = when {
+            //     ch == "." -> arrayOf(node.pos.up(), node.pos.left(), node.pos.down(), node.pos.right())
+            //     ch == ">" -> arrayOf(node.pos.right())
+            //     ch == "^" -> arrayOf(node.pos.up())
+            //     ch == "<" -> arrayOf(node.pos.left())
+            //     ch == "v" -> arrayOf(node.pos.down())
+            //     else -> arrayOf[Point]()
+            // } 
+
+            val dirs = arrayOf(node.pos.up(), node.pos.left(), node.pos.down(), node.pos.right())
+
+            var i = 0
+            while (i < dirs.size()) {
+                val neighbour = dirs[i]
+                if (tm.contains(neighbour) && tm.get(neighbour) != "#" && !seen.contains(neighbour)) {
+                    stack.add(Node(neighbour, node.dist + 1))
+                    seen.add(neighbour)
+                }
+                i += 1
+            }
+
+        }
+    })
+
+    println(graph)
+
+    val seen = setOf[Point]()
+    dfs(graph, seen, s)
+}
+
+fn getAt(graph: Map[Point, Map[Point, int]], pos: Point): Map[Point,int] {
+    (graph as Map[Point,Point]).get(pos).unwrap() as Map
+}
+
+
+
+fn dfs(graph: Map[Point, Map[Point, int]], seen: Set[Point], pos: Point): int {
+    if (pos != goal) {
+        var m = -maxInt
+
+        seen.add(pos)
+        val neighs: Map[Point,int] = graph.getAt(pos)
+        val keys: array[Point] = neighs.keys()
+        var i = 0
+        while (i < keys.size()) {
+            val k = keys[i]
+            val dist = (neighs as Map[Point,Point]).get(k).unwrap() as int
+            if (!seen.contains(k)) {
+                val pathFromK = graph.dfs(seen, k)
+                if (pathFromK >= 0) {
+                    m = math.max(m, pathFromK + dist)
+                }
+            }
+            i += 1
+        }
+
+        seen.remove(pos)
+        m
+    } else {
+        // pos == goal
+        0
+    }
+}
+
+
+println("Part 2: " + part2() as string)
+0

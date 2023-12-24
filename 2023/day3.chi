@@ -1,0 +1,310 @@
+
+import aoc/lib { load, splitOnNewLines }
+import std/lang.interop as iop { lookupHostSymbol }
+import std/collections.set as set { newSet }
+
+val input = load("aoc-23/input3.txt")
+val test = load("aoc-23/test3.txt")
+
+
+val lines = input.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+fn isDigit(ch: string): bool {
+    "1 2 3 4 5 6 7 8 9 0".contains(ch)
+}
+
+fn isSymbol(ch: string): bool {
+    !isDigit(ch) && ch != "."
+}
+
+fn coerceAtMost(i: int, maxValue: int): int {
+    if (i <= maxValue) {
+        i
+    } else {
+        maxValue
+    }
+}
+
+fn coerceAtLeast(i: int, minValue: int): int {
+    if (i >= minValue) {
+        i
+    } else {
+        minValue
+    }
+}
+
+fn findNumber(line: string, seed: int): int {
+    var left = seed
+    var right = seed
+    while(left >= 0 && isDigit(line[left])) {
+        left -= 1
+    }
+    while(right < line.length() && isDigit(line[right])) {
+        right += 1
+    }
+    line.substring(left+1, right-left-1) as int
+}
+
+
+fn part1_tmp(lines: array[string]): int {
+    var sum = 0
+    var y = 0
+    while(y < lines.size()) {
+        var x = 0
+        var line = lines[y]
+        while(x < line.length()) {
+
+            val ch = line[x]
+            if (!isDigit(ch) && ch != ".") {
+                // found symbol
+                // check on the left
+                val left = (x-1).coerceAtLeast(0)
+                if (line[left] != ".") {
+                    sum += findNumber(line, left)
+                }
+                // check on the right
+                val right = (x+1).coerceAtMost(line.length()-1)
+                if (line[right] != ".") {
+                    sum += findNumber(line, right)
+                }
+                // check numbers above
+                if (y > 0) {
+                    val aboveRow = lines[y-1].substring(left, 3) // index oob
+                }
+                // check numbers below
+            }
+
+            x += 1
+        }
+        y += 1
+    }
+    sum
+}
+
+
+data State = Searching | ReadingNumber
+
+
+
+fn part1_a(lines: array[string]): int {
+    var sum = 0
+    var y = 0
+    var state = Searching
+    var currentNumber = ""
+    var isPartNumber = false
+    while(y < lines.size()) {
+        var x = 0
+        val line = lines[y]
+        while(x < line.length()) {
+            val ch = line[x]
+
+            when {
+                state == Searching -> {
+                    if (isDigit(ch)) {
+                        currentNumber = ch
+                        state = ReadingNumber
+
+                        // check previous column
+                        if (x > 0) { 
+                            // check on the left
+                            if (isSymbol(line[x-1])) {
+                                isPartNumber = true
+                            }
+                            // check left above
+                            if (y > 0 && isSymbol(lines[y-1][x-1])) {
+                                isPartNumber = true
+                            }
+                            // check left below
+                            if (y < lines.size()-1 && isSymbol(lines[y+1][x-1])) {
+                                isPartNumber = true
+                            }
+                        }
+                        // check above
+                        if (y > 0 && isSymbol(lines[y-1][x])) {
+                            isPartNumber = true
+                        }
+                        // check below
+                        if (y < lines.size() - 1 && isSymbol(lines[y+1][x])) {
+                            isPartNumber = true
+                        }
+                    }
+                }
+                state == ReadingNumber -> {
+                    if (isSymbol(ch)) {
+                        isPartNumber = true
+                    }
+                    // check above
+                    if (y > 0 && isSymbol(lines[y-1][x])) {
+                        isPartNumber = true
+                    }
+                    // check below
+                    if (y < lines.size() - 1 && isSymbol(lines[y+1][x])) {
+                        isPartNumber = true
+                    }
+
+                    if (isDigit(ch)) {
+                        currentNumber = currentNumber + ch
+                    } else {
+                        if (isPartNumber) {
+                            sum += currentNumber as int
+                        }
+                        state = Searching
+                        isPartNumber = false
+                        currentNumber = ""
+                    }
+
+                }
+            }
+
+
+            x += 1
+        }
+
+        y += 1
+    }
+
+
+    sum
+}
+
+fn isBlank(s: string): bool {
+    s.trim().isEmpty()
+}
+
+
+fn hasSymbol(s: string): bool {
+    val clean: string = s.replaceAll("\\d|\\.", "")
+    clean.isBlank()
+}
+
+fn part1(lines: array[string]): int {
+    var sum = 0
+    var y = 0
+    var state = Searching
+    var currentNumber = ""
+    var startIndex = 0
+    while(y < lines.size()) {
+        var x = 0
+        val line = lines[y]
+        while(x < line.length()) {
+            val ch = line[x]
+
+            when {
+                state == Searching -> {
+                    if (isDigit(ch)) {
+                        currentNumber = ch
+                        startIndex = (x-1).coerceAtLeast(0)
+                        state = ReadingNumber
+                    }
+                }
+                state == ReadingNumber -> {
+                    if (isDigit(ch)) {
+                        currentNumber = currentNumber + ch
+                    } else {
+                        val end = (x+1).coerceAtMost(line.length())
+                        val len = end - startIndex
+                        var isPartNumber = false
+
+                        if (y > 0) {
+                            //println(lines[y-1].substring(startIndex,len))
+                            isPartNumber = isPartNumber || !lines[y-1].substring(startIndex,len).hasSymbol()
+                        }
+                        //println(lines[y].substring(startIndex,len))
+                        isPartNumber = isPartNumber || !lines[y].substring(startIndex,len).hasSymbol()
+                        if (y < lines.size()-1) {
+                            //println(lines[y+1].substring(startIndex,len))
+                            isPartNumber = isPartNumber || !lines[y+1].substring(startIndex,len).hasSymbol()
+                        }
+
+
+                        if (isPartNumber) {
+                            sum += currentNumber as int
+                            //println("Is part number!")
+                        }
+
+                        //println("##################################")
+
+
+                        currentNumber = ""
+                        state = Searching
+                    }
+                }
+            }
+
+
+            x += 1
+        }
+
+        y += 1
+    }
+
+
+    sum
+}
+
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(lines)}")
+
+
+
+//////////////////////////////////////////////////////////
+// Part 2
+
+
+fn part2(lines: array[string]): int {
+    var sum = 0
+    var y = 0
+    while(y < lines.size()) {
+        var x = 0
+        var line = lines[y]
+        while(x < line.length()) {
+
+            val ch = line[x]
+            val left = (x-1).coerceAtLeast(0)
+            val right = (x+1).coerceAtMost(line.length()-1)
+            if (ch == "*") {
+                val numbers = newSet[int]()
+                // found symbol
+                // check on the left
+                if (isDigit(line[left])) {
+                    numbers.add(findNumber(line, left))
+                }
+                // check on the right
+                if (isDigit(line[right])) {
+                    numbers.add(findNumber(line, right))
+                }
+                // check numbers above
+                if (y > 0) {
+                    val aboveRow = lines[y-1]
+                    if(isDigit(aboveRow[left])) { numbers.add(findNumber(aboveRow, left)) }
+                    if(isDigit(aboveRow[x])) { numbers.add(findNumber(aboveRow, x)) }
+                    if(isDigit(aboveRow[right])) { numbers.add(findNumber(aboveRow, right)) }
+                }
+
+                // check numbers below
+                if (y+1 < lines.size()) {
+                    val below = lines[y+1]
+                    if(isDigit(below[left])) { numbers.add(findNumber(below, left)) }
+                    if(isDigit(below[x])) { numbers.add(findNumber(below, x)) }
+                    if(isDigit(below[right])) { numbers.add(findNumber(below, right)) }
+                }
+
+                if (numbers.size() == 2) {
+                    val arr = numbers.toArray()
+                    val ratio = arr[0] * arr[1]
+                    sum += ratio
+                }
+            }
+
+            x += 1
+        }
+        y += 1
+    }
+    sum
+}
+
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(lines)}")

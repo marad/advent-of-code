@@ -1,0 +1,209 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/lang.unsafe { array as unsafeArray }
+
+
+val prod = load("aoc-23/input10.txt")
+val test = load("aoc-23/test10.txt")
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+data Point(x: int, y: int)
+
+fn findStart(lines: array[string]): Point {
+    var result = Point(-1, -1)
+    var y = 0
+    lines.forEach({it: string ->
+        var x = 0
+        while (x < it.length()) {
+            if (it[x] == "S") {
+                result = Point(x, y)
+                break
+            }
+            x += 1
+        }
+        y += 1
+    })
+    result
+}
+
+fn getWidth(lines: array[string]): int { lines[0].length() }
+fn getHeight(lines: array[string]): int { lines.size() }
+
+fn at(lines: array[string], pos: Point): string {
+    if (pos.y >= 0 && pos.y < lines.getHeight() && 0 <= pos.x && pos.x < lines.getWidth()) {
+        lines[pos.y][pos.x]
+    } else "."
+}
+
+fn getConnectedFieldsAt(lines: array[string], pos: Point): ArrayList[Point] {
+    val ch = lines.at(pos)
+    val up = Point(pos.x, pos.y-1)
+    val down = Point(pos.x, pos.y+1)
+    val left = Point(pos.x-1, pos.y)
+    val right = Point(pos.x+1, pos.y)
+    val result = newArrayList[Point]()
+    when {
+        ch == "|" -> {
+            result.add(up)
+            result.add(down)
+        }
+        ch == "-" -> {
+            result.add(left)
+            result.add(right)
+        }
+        ch == "L" -> {
+            result.add(up)
+            result.add(right)
+        }
+        ch == "J" -> {
+            result.add(up)
+            result.add(left)
+        }
+        ch == "7" -> {
+            result.add(down)
+            result.add(left)
+        }
+        ch == "F" -> {
+            result.add(down)
+            result.add(right)
+        }
+        ch == "S" -> {
+            if (setOf("|", "7", "F").contains(lines.at(up))) { result.add(up) }
+            if (setOf("|", "L", "J").contains(lines.at(down))) { result.add(down) }
+            if (setOf("-", "L", "F").contains(lines.at(left))) { result.add(left) }
+            if (setOf("-", "7", "J").contains(lines.at(right))) { result.add(right) }
+        }
+    }
+    result
+}
+
+
+fn setAt(dist: array[array[int]], pos: Point, value: int) {
+    dist[pos.y][pos.x] = value
+}
+
+fn getAt(dist: array[array[int]], pos: Point): int {
+    if (pos.y >= 0 && pos.y < dist.size() && 0 <= pos.x && pos.x < dist[0].size()) {
+        dist[pos.y][pos.x]
+    } else { -2 }
+}
+
+fn genDist(lines: array[string]): array[array[int]] {
+    val dist = unsafeArray[array[int]](lines.getHeight())
+    var i = 0
+    while (i < lines.getHeight()) {
+        dist[i] = array[int](lines.getWidth(), -1)
+        i += 1
+    }
+
+    val start = findStart(lines)
+    dist.setAt(start, 0)
+
+    val queue = queueOf[Point](findStart(lines))
+
+    while(true) {
+
+        val el = queue.pop()
+        when {
+            el is Just -> {
+                val pos = el.value as Point
+                val currentDist = dist.getAt(pos)
+                val connections = lines.getConnectedFieldsAt(pos)
+                connections.forEach({ p:Point ->
+                    val targetDist = dist.getAt(p)
+                    if ((targetDist == -1) || (targetDist > (currentDist+1))) {
+                        dist.setAt(p, currentDist + 1)
+                        queue.push(p)
+                    }
+                })
+            }
+            else -> break
+        }
+    }
+
+    dist
+}
+
+fn part1(lines: array[string]): int {
+    val dist = genDist(lines)
+
+    var max = 0
+    dist.forEach({arr: array[int] -> 
+        arr.forEach({ i:int ->
+            max = math.max(max,i)
+        })
+    })
+    max
+}
+
+
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+fn part2(lines: array[string]): int {
+    var count = 0
+    var y = 0
+    val dist = genDist(lines)
+    lines.forEach({ line:string -> 
+        var x = 0
+        var left = 0
+        while (x < line.length()) {
+            val ch = line[x]
+
+            val partOfLoop = (dist.getAt(Point(x,y)) != (-1))
+
+            if (partOfLoop && (ch == "|" || ch == "F" || ch == "7")) {
+                left += 1
+            }
+
+            if (!partOfLoop && (left%2 == 1) ) {
+                count += 1
+            } 
+            x += 1
+        }
+        y += 1
+    })
+    count
+}
+
+
+
+val test2 = load("aoc-23/test10_1.txt")
+
+val tlines2 = test2.splitOnNewLines()
+
+println("Part 2 (test): ${part2(tlines2)}")
+println("Part 2 (prod): ${part2(plines)}")
+
+data Queue[T](list: ArrayList[T])
+
+fn queueOf[T](el: T): Queue {
+    Queue(list.of(el))
+}
+
+fn peek[T](q: Queue[T]): Option[T] { q.list.get(q.list.size()-1) }
+
+fn pop[T](q: Queue[T]): Option[T] { 
+    val size = q.list.size()
+    if (size == 0) { Nothing }
+    else {
+        val result = q.list.get(size-1) 
+        q.list.remove(size-1)
+        result
+    }
+}
+
+fn push[T](q: Queue[T], el: T) { 
+    q.list.add(el)
+}
+
+fn size[T](q: Queue[T]): int {
+    q.list.size()
+}

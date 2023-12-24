@@ -1,0 +1,180 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/lang.unsafe { array as unsafeArray }
+
+
+val prod = load("aoc-23/input12.txt")
+val test = load("aoc-23/test12.txt")
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+fn stoi(s:string): int { s as int }
+
+data StringView(s: string, start: int, end: int)
+fn toStringView(s: string): StringView { StringView(s, 0, s.length()) }
+fn tail(sv: StringView): StringView { StringView(sv.s, sv.start+1, sv.end) }
+fn unsafeHead(sv: StringView): string { sv.s[sv.start] }
+fn unsafeAt(sv: StringView, index: int): string { sv.s[sv.start + index] }
+fn size(sv: StringView): int { sv.end - sv.start }
+fn contains(sv: StringView, needle: string): bool {
+    if (sv.start < sv.end) {
+        sv.s.substring(sv.start, sv.end-sv.start).contains(needle)
+    } else {
+        false
+    }
+}
+fn toString(sv: StringView): string { sv.s.substring(sv.start, sv.end-sv.start) }
+
+data ArrayView[T](a: array[T], start: int, end: int)
+fn toArrayView[T](a: array[T]): ArrayView[T] { ArrayView(a, 0, a.size()) }
+fn drop[T](av: ArrayView[T]): ArrayView[T] { ArrayView(av.a, av.start+1, av.end) }
+fn unsafeHead[T](av: ArrayView[T]): T { av.a[av.start] }
+fn unsafeAt[T](av: ArrayView[T], index: int): T { av.a[av.start + index] }
+fn size[T](av: ArrayView[T]): int { av.end - av.start }
+
+fn toPattern(def: array[int]): string {
+    var result = ""
+    def.map({ i:int -> 
+        var tmp = i
+        while(tmp > 0) { 
+            result += "#" 
+            tmp -= 1
+        }
+        result += "."
+    })
+    result.substring(0, result.length()-1)
+}
+
+fn hash(input: StringView, pattern: StringView, last: string): string {
+    "${input.start},${input.end},${pattern.start},${pattern.end},$last"
+}
+
+fn solve(mem: Map[string, int], input: StringView, pattern: StringView, last: string, argAcc: string): int {
+    val id = hash(input, pattern, last)
+    val maybe = (mem as Map[string,string]).get(id)
+    if (maybe is Just) {
+        maybe.value as int
+    } else {
+        val acc = argAcc + last
+        val result = if (pattern.size() == 0) {
+            if (input.contains("#")) {
+                0 // if pattern is finished we cannot have any more # in the input
+            } else {
+                1
+            }
+        }
+        else if (pattern.size() > input.size()) {
+            0
+        } 
+        else {
+            val ch = input.unsafeHead()
+            val exp = pattern.unsafeHead()
+            when {
+                ch == "?" && exp == "#" && last == "#" -> {
+                    // we continue a group so only one possibility of #
+                    solve(mem, input.tail(), pattern.tail(), "#", acc)
+                }
+                ch == "?" && exp == "#" && last != "#" -> {
+                    // we might start a group (and consume pattern) or put a '.' (and leave pattern unchanged)
+                    solve(mem, input.tail(), pattern, ".", acc) + solve(mem, input.tail(), pattern.tail(), "#", acc)
+                }
+                ch == "?" && exp == "." -> {
+                    // we've finished a group, dot is mandatory so only one possibility of .
+                    solve(mem, input.tail(), pattern.tail(), ".", acc)
+                }
+                ch == "." && exp == "#" && last != "#" -> {
+                    // we are looking for # so we can safely skip the .
+                    solve(mem, input.tail(), pattern, ch, acc)
+                }
+                ch == "." && exp == "#" && last == "#" -> {
+                    // we were reading group, but suddenly . appeared - impossible
+                    0
+                }
+                ch == "." && exp == "." -> {
+                    // we have dot and we expec dot. consume it
+                    solve(mem, input.tail(), pattern.tail(), ch, acc)
+                }
+                ch == "#" && exp == "#" -> {
+                    // we continue reading the group - only one way to go
+                    solve(mem, input.tail(), pattern.tail(), ch, acc)
+                }
+                ch == "#" && exp == "." && last == "#" -> {
+                    // we've finished a group, but input contains one more spring - 0 possibilities
+                    0
+                }
+                else -> {
+                    println("Unhandled case for input: $ch, exp: $exp, last: $last")
+                    0
+                }
+            }
+        }
+
+        mem.put(id, result)
+        result
+    }
+}
+
+
+fn solveLine(line: string): int {
+    val tmp = line.split(" ")
+    val input = tmp[0].replaceAll("^\\.*", "")
+                  .replaceAll("\\.*\$", "")
+                  .replaceAll("\\.+", "\\.")
+                  .toStringView()
+    val pattern = tmp[1].split(",").map(stoi).toPattern().toStringView()
+
+    solve(mapOf[string,int](), input, pattern, "", "")
+}
+
+fn part1(lines: array[string]): int { 
+    lines.map(solveLine).sum()
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+fn times(s: string, num: int): string {
+    var result = s
+    var i = 1
+    while(i < num) {
+        result += s
+        i += 1
+    }
+    result
+}
+
+fn times(s: string, num: int, glue: string): string {
+    var result = s
+    val part = glue + s
+    var i = 1
+    while(i < num) {
+        result += part
+        i += 1
+    }
+    result
+}
+
+fn solveLine2(line: string): int {
+    val tmp = line.split(" ")
+    val input = tmp[0].times(5, "?")
+                  .replaceAll("^\\.*", "")
+                  .replaceAll("\\.*\$", "")
+                  .replaceAll("\\.+", "\\.")
+                  .toStringView()
+    val pattern = tmp[1].times(5, ",").split(",").map(stoi).toPattern().toStringView()
+
+    solve(mapOf[string,int](), input, pattern, "", "")
+}
+
+
+fn part2(lines: array[string]): int { 
+    lines.map(solveLine2).sum()
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")

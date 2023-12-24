@@ -1,0 +1,320 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/lang.unsafe { array as unsafeArray }
+
+
+val prod = load("aoc-23/input14.txt").trim()
+val test = load("aoc-23/test14.txt").trim()
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+fn columnWeight(lines: array[string], col: int): int {
+    var totalWeight = 0
+    var groupStartedAt = 0
+    var rockCount = 0
+    var i = 0
+    while (i < lines.size()) {
+        val ch = lines[i][col]
+        if (ch == "O") {
+            rockCount += 1
+        }
+        if (ch == "#") {
+            var weight = lines.size() - groupStartedAt
+            while (rockCount > 0) {
+                totalWeight += weight
+                weight -= 1
+                rockCount -= 1
+            }
+            groupStartedAt = i + 1
+            rockCount = 0
+        }
+        i += 1
+    }
+
+    var weight = lines.size() - groupStartedAt
+    while (rockCount > 0) {
+        totalWeight += weight
+        weight -= 1
+        rockCount -= 1
+    }
+
+    totalWeight
+}
+
+fn part1(lines: array[string]): int { 
+    val cols = lines[0].length()
+    var col = 0
+    var sum = 0
+    while (col < cols) {
+        val weight = lines.columnWeight(col)
+        sum += weight
+        col += 1
+    }
+    sum
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+fn point(x: int, y: int): int { (x<<32) | y }
+fn x(point: int): int { point >> 32 }
+fn y(point: int): int { (point << 32) >> 32 }
+
+val round = 1
+val cube = 2
+
+data Platform(width: int, height: int, map: array[int])
+
+fn move(platform: Platform, fromX:int, fromY: int, toX: int, toY: int) {
+    val fromIndex = fromX + (fromY * platform.width)
+    val toIndex = toX + (toY * platform.width)
+    if (fromIndex != toIndex) {
+        platform.map[toIndex] = (platform.map[fromIndex])
+        platform.map[fromIndex] = 0
+    }
+}
+
+fn moveUp(platform: Platform, x: int, y: int) {
+    var row = y - 1
+    while (true) {
+        if (row < 0 || platform.at(x, row) != 0) {
+            row += 1
+            break
+        }
+        row -= 1
+    }
+    if (row < 0) { row = 0 }
+    platform.move(x,y, x, row)
+}
+
+fn moveDown(platform: Platform, x: int, y: int) {
+    var row = y + 1
+    while (row < platform.height) {
+        if (platform.at(x, row) != 0) {
+            row -= 1
+            break
+        }
+        row += 1
+    }
+    if (row > platform.height-1) { row = platform.height - 1}
+    platform.move(x,y, x,row)
+}
+
+
+fn moveLeft(platform: Platform, x: int, y: int) {
+    var col = x - 1
+    while (true) {
+        if (col < 0 || platform.at(col, y) != 0) {
+            col += 1
+            break
+        }
+        col -= 1
+    }
+    if (col < 0) { col = 0}
+    platform.move(x,y, col,y)
+}
+
+fn moveRight(platform: Platform, x: int, y: int) {
+    var col = x + 1
+    while (col < platform.width) {
+        if (platform.at(col, y) != 0) {
+            col -= 1
+            break
+        }
+        col += 1
+    }
+    if (col > platform.width-1) { col = platform.width - 1}
+    platform.move(x,y, col,y)
+}
+
+fn at(platform: Platform, x:int, y:int): int {
+    val index = (y * platform.width) + x
+    platform.map[index]
+}
+
+fn copyWithNewMap(platform: Platform): Platform {
+    Platform(platform.width, platform.height, array(platform.width * platform.height, 0))
+}
+
+fn show(platform: Platform) {
+    var y = 0
+    while (y < platform.height) {
+        var x = 0
+        while (x < platform.width) {
+            val t = platform.at(x,y)
+            if (t == round) {
+                print("O")
+            } else if (t == cube) {
+                print("#")
+            } else {
+                print(".")
+            }
+            x += 1
+        }
+        println("")
+        y += 1
+    }
+}
+
+fn parse(lines: array[string]): Platform {
+    val width = lines[0].length()
+    val totalSize = lines.size() * width
+    val result = array(totalSize, 0)
+    var y = 0
+    while (y < lines.size()) {
+        var x = 0
+        while (x < width) {
+            val index = (width * y) + x
+            val ch = lines[y][x]
+            if (ch == "O") {
+                result[index] = round
+            }
+            if (ch == "#") {
+                result[index] = cube
+            }
+            x += 1
+        }
+        y += 1
+    }
+    Platform(width, lines.size(), result)
+}
+
+fn tiltNorth(platform: Platform): Platform {
+    var col = 0
+    while (col < platform.width) {
+        var row = 0
+        while (row < platform.height) {
+            val rock = platform.at(col, row)
+            if (rock == round) {
+                platform.moveUp(col, row)
+            }
+            row += 1
+        }
+        col += 1
+    }
+    platform
+}
+
+
+fn tiltSouth(platform: Platform): Platform {
+    var col = 0
+    while (col < platform.width) {
+        var row = platform.height - 1
+        while (row >= 0) {
+            val rock = platform.at(col, row)
+            if (rock == round) {
+                platform.moveDown(col, row)
+            }
+            row -= 1
+        }
+        col += 1
+    }
+    platform
+}
+
+fn tiltWest(platform: Platform): Platform {
+    var col = 0
+    while (col < platform.width) {
+        var row = platform.height - 1
+        while (row >= 0) {
+            val rock = platform.at(col, row)
+            if (rock == round) {
+                platform.moveLeft(col, row)
+            }
+            row -= 1
+        }
+        col += 1
+    }
+    platform
+}
+
+
+fn tiltEast(platform: Platform): Platform {
+    var col = platform.width - 1
+    while (col >= 0) {
+        var row = platform.height - 1
+        while (row >= 0) {
+            val rock = platform.at(col, row)
+            if (rock == round) {
+                platform.moveRight(col, row)
+            }
+            row -= 1
+        }
+        col -= 1
+    }
+    platform
+}
+
+fn cycle(platform: Platform) {
+    platform.tiltNorth()
+    platform.tiltWest()
+    platform.tiltSouth()
+    platform.tiltEast()
+}
+
+fn cycleTimes(platform: Platform, times: int) {
+    var left = times - 1
+    while (left >= 0) {
+        platform.cycle()
+        left -= 1
+    }
+}
+
+data Cycle(len: int, start: int)
+
+fn indexFor(cycle: Cycle, i: int): int { (i - cycle.start) % cycle.start }
+
+fn findCycle(platform: Platform): Cycle {
+    var i = 0
+    val hashes = newArrayList[int]()
+    var result = Cycle(-1, -1)
+    while (true) {
+        platform.cycle()
+        val code = platform.map.hashCode()
+        val lastSuchHash = hashes.lastIndexOf(code)
+
+        if (lastSuchHash >= 0) {
+            val len = i - lastSuchHash
+            result = Cycle(len, lastSuchHash)
+            break
+        }
+
+        hashes.add(code)
+        i += 1
+    }
+    result
+}
+
+fn calcLoad(platform: Platform): int {
+    var load = 0
+    var y = 0
+    while (y < platform.height) {
+        var x = 0
+        while (x < platform.width) {
+            val rock = platform.at(x,y)
+            if (rock == round) {
+                load += (platform.height - y)
+            }
+            x += 1
+        }
+        y += 1
+    }
+    load
+}
+
+fn part2(lines: array[string]): int {
+    val platform = lines.parse()
+    val cycle = platform.findCycle()
+    val offset = (1000000000-cycle.start) % cycle.len
+    platform.cycleTimes(offset-1)
+    platform.calcLoad()
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")
+0

@@ -1,0 +1,209 @@
+
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
+import std/lang.unsafe { array as unsafeArray }
+import std/lang.interop as iop
+
+val maxInt = 9223372036854775807
+
+val prod = load("aoc-23/input22.txt").trim()
+val test = load("aoc-23/test22.txt").trim()
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+val tinput = Input(tlines)
+val pinput = Input(plines)
+
+// data Point(x: int, y: int, z: int)
+data Line(name: string, start: array[int], end: array[int])
+
+fn copy(line: Line): Line {
+    val s = arrayOf(line.start[0], line.start[1], line.start[2])
+    val e = arrayOf(line.end[0], line.end[1], line.end[2])
+    Line(line.name, s, e)
+}
+
+fn lenXY(line: Line): int {
+    // manhattan distance is ok, since lines are always aligned with one axis
+    // if it's line going up/down it's len will be zero
+    math.abs(line.end[0] - line.start[0]) + math.abs(line.end[1] - line.start[1])
+}
+
+// fn parsePoint(spec: string): Point {
+//     val tmp = spec.split(",")
+//     Point(tmp[0] as int, tmp[1] as int, tmp[2] as int)
+// }
+
+fn mapToInt(a: array[string]): array[int] { a.map({it:string -> it as int}) }
+
+fn intersectionXY(a: Line, b:Line): Option[Point] {
+    val s1_x: float = (a.end[0] - a.start[0]) as float
+    val s1_y: float = (a.end[1] - a.start[1]) as float
+    val s2_x: float = (b.end[0] - b.start[0]) as float
+    val s2_y: float = (b.end[1] - b.start[1]) as float
+
+    val p0_x: float = a.start[0] as float
+    val p0_y: float = a.start[1] as float
+    val p2_x: float = b.start[0] as float
+    val p2_y: float = b.start[1] as float
+
+    val s = ((s1_y) * (p0_x - p2_x) + s1_x * (p0_y - p2_y)) /  ( (-s2_x)  * s1_y + s1_x * s2_y)
+    val t =  (s2_x * (p0_y - p2_y) - s2_y * (p0_x - p2_x)) / ((-s2_x) * s1_y + s1_x * s2_y)
+
+    // println("s $s, t $t")
+    if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+        Just(Point((p0_x + (t * s1_x)) as int, (p0_y + (t * s1_y)) as int))
+    } else {
+        Nothing
+    }
+}
+
+fn contains(line: Line, x: int, y: int): bool {
+    if (line.end[0] - line.start[0] > 0) {
+        // horizontal line
+        (line.start[1] == y) && (line.start[0] <= x && x <= line.end[0])
+    } else {
+        // vertical line
+        (line.start[0] == x) && (line.start[1] <= y && y <= line.end[1])
+    }
+}
+
+fn intersectsXY(a: Line, b: Line): bool {
+    if (a.lenXY() == 0 && b.lenXY() != 0) {
+        // check if a.xy is on the b line
+        b.contains(a.start[0], a.start[1])
+    } else if (b.lenXY() == 0) {
+        // check if b.xy is on the a line
+        a.contains(b.start[0], b.start[1])
+    } else {
+        intersectionXY(a,b) is Just
+    }
+}
+
+fn parseLine(line: string, name:string): Line {
+    val foo = line.split("~")
+    // Line(parsePoint(foo[0]), parsePoint(foo[1]))
+    Line(name, foo[0].split(",").mapToInt(), foo[1].split(",").mapToInt())
+}
+
+fn lowestZ(line: Line): int {
+    if (line.start[2] < line.end[2]) {
+        line.start[2]
+    } else {
+        line.end[2]
+    }
+}
+
+
+fn settle(input: ArrayList[Line]): Pair[int, ArrayList[Line]] {
+    val lines = newPriorityQueue[Line]({ a:Line, b:Line ->
+        b.lowestZ() - a.lowestZ()
+    })
+    val linesFromTop = newPriorityQueue[Line]({ a:Line, b:Line ->
+        a.lowestZ() - b.lowestZ()
+    })
+
+    input.forEach({ it:Line -> lines.insert(it) })
+
+    var moveCount = 0 
+    while (lines.size() > 0) {
+        val current: Line = lines.pop()
+        println("Considering $current")
+
+        // find first intersecting line from top
+        var j = 0
+        var settled = false
+        while (j < linesFromTop.heap.size()) {
+            var other = linesFromTop.heap.unsafeGet(j)
+            println("\tchecking with ${other}")
+            val offset = current.start[2] - other.end[2]
+            println("${other.name} $offset")
+            if (offset == 1 && (current.intersectsXY(other) || other.intersectsXY(current))) {
+                // already settled
+                break
+            }
+            else if (offset > 1 && (current.intersectsXY(other) || other.intersectsXY(current))) {
+                // println("\t${current.name} intersects with ${other.name}")
+                settled = true
+                println("moving ${current.name}")
+                current.start[2] = ((current.start[2] - offset) + 1)
+                current.end[2] = ((current.end[2] - offset) + 1)
+                moveCount += 1
+                break
+            }
+            j += 1
+        }
+
+        if (!settled && current.start[2] > 1) {
+            println("moving a ${current.name}")
+            moveCount += 1
+            current.end[2] = (current.end[2] - current.start[2] + 1)
+            current.start[2] = 1
+        }
+
+        linesFromTop.insert(current)
+    }
+
+    // val maxHeight = linesFromTop.peek().unwrap().start[2]
+    // val arr = unsafeArray[ArrayList](maxHeight)
+    // i = 0
+    // while (i < arr.size()) {
+    //     arr[i] = newArrayList[Line]()
+    // }
+
+    val result = newArrayList[Line]()
+    while(linesFromTop.size() > 0) {
+        val it = linesFromTop.pop()
+        result.add(it)
+    }
+
+    Pair(moveCount, result)
+}
+
+fn part1(input: array[string]): int {
+    // val lines = newPriorityQueue[Line]({ a:Line, b:Line ->
+    //     b.lowestZ() - a.lowestZ()
+    // })
+
+    // parse lines
+    var i = 0
+    val lines = newArrayList[Line]()
+    while (i < input.size()) {
+        val name = str.fromCodePoints(arrayOf(i + 65))
+        val line = parseLine(input[i], name)
+        lines.add(line)
+        i += 1
+    }
+
+    val settled = lines.settle().right
+
+    0
+}
+
+// val e = Line("E", arrayOf(2, 0, 5), arrayOf(2, 2, 5))
+// val b = Line("B", arrayOf(0, 0, 2), arrayOf(2, 0, 2))
+
+// println(e.intersectsXY(b))
+// println(b.intersectsXY(e))
+
+println("Part 1 (test): ${part1(tlines)}")
+// println("Part 1 (prod): ${part1(plines)}")
+
+fn part2(lines: array[string]): int {
+    0
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")
+0

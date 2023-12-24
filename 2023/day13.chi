@@ -1,0 +1,154 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/lang.unsafe { array as unsafeArray }
+
+
+val prod = load("aoc-23/input13.txt").trim()
+val test = load("aoc-23/test13.txt").trim()
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+
+// Returns number of different chars for same-length strings
+fn diffs(a: string, b: string): int {
+    var i = 0
+    var result = 0
+    while (i < a.length()) {
+        if (a[i] != b[i]) {
+            result += 1
+        }
+        i += 1
+    }
+    result
+}
+
+
+// makes columns into lines
+fn rotate(sa: ArrayList[string]): ArrayList[string] {
+    val w = sa.unsafeGet(0).length()
+    val h = sa.size()
+
+    val result = newArrayList[string]()
+
+    var x = 0
+    while (x < w) { // for each columnt
+        var line = ""
+        var y = 0
+        while (y < h) {
+
+            line += sa.unsafeGet(y)[x]
+            
+            y += 1
+        }
+
+        result.add(line)
+        x += 1
+    }
+
+    result
+}
+
+fn readPatterns(lines: array[string]): ArrayList[ArrayList[string]] {
+    val result = newArrayList[ArrayList[string]]()
+    var current = newArrayList[string]()
+    lines.forEach({it:string -> 
+        if (it.trim().isEmpty()) {
+            result.add(current)
+            current = newArrayList[string]()
+        } else {
+            current.add(it)
+        }
+    })
+    result.add(current)
+    result
+}
+
+fn show(pattern: ArrayList[string]) {
+    pattern.forEach(println)
+}
+
+fn isSymmetric(pattern: ArrayList[string], at: int, maxDist: int): bool {
+    var above = at 
+    var below = at+1
+    var symmetric = true
+    var totalDiffs = 0
+    while(above >= 0 && below < pattern.size()) {
+        val aboveLine = pattern.unsafeGet(above)
+        val belowLine = pattern.unsafeGet(below)
+
+        if (aboveLine != belowLine) {
+            val dist = diffs(aboveLine, belowLine)
+            totalDiffs += dist
+        } 
+        above -= 1
+        below += 1
+    }
+
+    totalDiffs == maxDist
+}
+
+fn findHorizontalMirror(pattern: ArrayList[string], maxDist: int): int {
+    var i = 0
+    var result = -1
+    while (i < pattern.size()-1) {
+        if (isSymmetric(pattern, i, maxDist)) {
+            result = i
+            break
+        }
+        i += 1
+    }
+    result
+}
+
+
+fn part1(lines: array[string]): int { 
+    val patterns = lines.readPatterns()
+    var sum = 0
+    patterns.forEach({ pattern: ArrayList[string] -> 
+        val h = findHorizontalMirror(pattern, 0)
+        val v = findHorizontalMirror(pattern.rotate(), 0)
+        if (h >= 0) {
+            sum += 100 * (h+1)
+        }
+        
+        if (v >= 0) {
+            sum += (v+1)
+        }
+    })
+    sum
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+fn part2(lines: array[string]): int { 
+    val patterns = lines.readPatterns()
+    var sum = 0
+    patterns.forEach({ pattern: ArrayList[string] -> 
+        val h = findHorizontalMirror(pattern, 1)
+        val v = findHorizontalMirror(pattern.rotate(), 1)
+        if (h >= 0) {
+            sum += 100 * (h+1)
+        }
+        
+        if (v >= 0) {
+            sum += (v+1)
+        }
+
+        if (v >= 0 && h >= 0) {
+            println("Both have mirror!")
+            pattern.show()
+            println("-------------------")
+        }
+    })
+    sum
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(plines)}")
+0

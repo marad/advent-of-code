@@ -1,0 +1,35 @@
+package aoc/direction
+
+data Direction = pub Up | pub Down | pub Right | pub Left | pub None
+
+pub fn rotateCW(dir: Direction): Direction {
+    when {
+        dir == Up -> Right
+        dir == Right -> Down
+        dir == Down -> Left
+        dir == Left -> Up
+        else -> dir
+    }
+}
+
+pub fn rotateCCW(dir: Direction): Direction {
+    when {
+        dir == Up -> Left
+        dir == Left -> Down
+        dir == Down -> Right
+        dir == Right -> Up
+        else -> dir
+    }
+}
+
+pub fn oposite(dir: Direction): Direction {
+    when {
+        dir == Up -> Down
+        dir == Down -> Up
+        dir == Left -> Right
+        dir == Right -> Left
+        else -> dir
+    }
+}
+
+

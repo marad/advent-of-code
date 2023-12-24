@@ -1,0 +1,91 @@
+package aoc.y23/day1
+
+import std/string as s { isDigit }
+import aoc/lib as aoc { splitOnNewLines, load, panic }
+
+val input = load("aoc-23/input1.txt")
+val lines = input.splitOnNewLines()
+
+// part 1
+
+fn firstDigit(line: string): int {
+    var digit = -999
+    var i = 0
+    val size = line.length()
+    while(i < size) {
+        val char = line[i]
+        if (s.isDigit(char.codePointAt(0))) {
+            digit = char as int
+            break
+        }
+        i = i + 1
+    }
+
+    digit
+}
+
+fn lastDigit(line: string): int {
+    var digit = -999
+    var i = line.length()-1
+    while(i >= 0) {
+        val char = line[i]
+        if (char.codePointAt(0).isDigit()) {
+            digit = char as int
+            break
+        }
+        i = i - 1
+    }
+    digit
+}
+
+fn calibrationValue(line: string): int {
+    "${line.firstDigit()}${line.lastDigit()}" as int
+}
+
+fn calcResult(lines: array[string]): int {
+    var i = 0
+    var sum = 0
+    while(i < lines.size()) {
+        val line = lines[i]
+        val value = line.calibrationValue()
+        sum = sum + value
+        i = i + 1
+    }
+    sum
+}
+
+
+println("Part 1 (prod): ${calcResult(lines)}")
+
+
+// part 2
+
+val line = lines[5]
+
+val testInput = "two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen"
+
+fn fixStuff(lines: array[string]): array[string] {
+    lines.map({ it: string ->
+        it.replaceAll("one", "o1e")
+            .replaceAll("two", "t2o")
+            .replaceAll("three", "th3ee")
+            .replaceAll("four", "f4ur")
+            .replaceAll("five", "f5ve")
+            .replaceAll("six", "s6x")
+            .replaceAll("seven", "se7en")
+            .replaceAll("eight", "ei8ht")
+            .replaceAll("nine", "ni9e")
+    })
+}
+
+val tlines = testInput.splitOnNewLines().fixStuff()
+val plines = lines.fixStuff()
+
+println("Part 2 (test): ${calcResult(tlines)}")
+println("Part 2 (prod): ${calcResult(plines)}")

@@ -1,0 +1,96 @@
+package aoc/tilemap
+
+import aoc/point { Point }
+import std/lang.unsafe { array as unsafeArray }
+
+data pub TileMap[T](pub map: array[T], pub width: int, pub height: int, pub size: int, pub infinite: bool)
+
+pub fn empty[T](width: int, height: int): TileMap[T] { 
+    val size = width * height
+    val map = unsafeArray[T](size)
+    TileMap(map, width, height, size, false)
+}
+
+pub fn index[T](tileMap: TileMap[T], x: int, y: int): int {
+    if (tileMap.infinite) {
+        (tileMap.width * (y%tileMap.height)) + (x%tileMap.width)
+    } else {
+        (tileMap.width * y) + x
+    }
+}
+
+pub fn index[T](tileMap: TileMap[T], p: Point): int {
+    tileMap.index(p.x, p.y)
+}
+
+pub fn contains[T](tileMap: TileMap[T], x: int, y: int): bool {
+    if (tileMap.infinite) {
+        true
+    } else {
+        0 <= x && x < tileMap.width && 0 <= y && y < tileMap.height
+    }
+}
+
+pub fn contains[T](tileMap: TileMap[T], p: Point): bool {
+    tileMap.contains(p.x, p.y)
+}
+
+pub fn set[T](tileMap: TileMap[T], p: Point, value: T) {
+    tileMap.map[tileMap.index(p)] = value
+}
+
+pub fn set[T](tileMap: TileMap[T], x: int, y: int, value: T) {
+    tileMap.map[tileMap.index(x, y)] = value
+}
+
+pub fn get[T](tileMap: TileMap[T], p: Point): T {
+    tileMap.map[tileMap.index(p)]
+}
+
+pub fn get[T](tileMap: TileMap[T], x: int, y: int): T {
+    tileMap.map[tileMap.index(x, y)]
+}
+
+pub fn update[T](tileMap: TileMap[T], p: Point, f: (T) -> T) {
+    tileMap.update(p.x, p.y, f)
+}
+
+pub fn update[T](tileMap: TileMap[T], x: int, y: int, f: (T) -> T) {
+    val idx = tileMap.index(x,y)
+    tileMap.map[idx] = f(tileMap.map[idx])
+}
+
+pub fn forEachTDLR[T](tileMap: TileMap[T], f: (Point) -> unit) {
+    var y = 0
+    while (y < tileMap.height) {
+        var x = 0
+        while (x < tileMap.height) {
+            f(Point(x,y))
+            x += 1
+        }
+        y += 1
+    }
+}
+
+pub fn show[T](tileMap: TileMap[T], splitter: string) {
+    var y = 0
+    while (y < tileMap.height) {
+        var x = 0
+        while (x < tileMap.height) {
+            print(tileMap.get(x,y))
+            print(splitter)
+            x += 1
+        }
+        println("")
+        y += 1
+    }
+}
+
+pub fn toIntTileMap[T](tm: TileMap[T], mapfunc: (T) -> int): TileMap[int] {
+    val result = empty[int](tm.width, tm.height)
+    tm.forEachTDLR({ pos: Point -> 
+        val t = tm.get(pos)
+        result.set(pos, mapfunc(t))
+    })
+    result
+}

@@ -1,0 +1,62 @@
+
+import aoc/lib as lib { load, splitOnNewLines, bigDecimalOf as bd, BigDecimal }
+import std/lang.interop as iop { lookupHostSymbol }
+
+val input = load("aoc-23/input6.txt")
+val test = load("aoc-23/test6.txt")
+
+val lines = input.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+
+fn countDistance(totalTime: BigDecimal, buttonTime: BigDecimal): BigDecimal {
+    val speedPerMs = buttonTime
+    totalTime.subtract(buttonTime).multiply(speedPerMs)
+}
+
+val zero = bd("0")
+val one = bd("1")
+
+fn countWays(totalTime: BigDecimal, record: BigDecimal): BigDecimal {
+    var betterTimeCount = bd("0")
+    var buttonTime = bd("1")
+    while(buttonTime.lt(totalTime)) {
+        val dist = countDistance(totalTime, buttonTime)
+        if (dist.gt(record)) {
+            betterTimeCount = betterTimeCount.add(one)
+        }
+        buttonTime = buttonTime.add(one)
+    }
+    betterTimeCount
+}
+
+fn part1(lines: array[string]): BigDecimal {
+    val totalTimes = lines[0].split("\\s+")
+    val records = lines[1].split("\\s+")
+
+    var result = bd("1")
+    var i = 1
+    while(i < totalTimes.size()) {
+        if(totalTimes[i].isEmpty()) break
+        val totalTime = bd(totalTimes[i].trim())
+        val record = bd(records[i].trim())
+
+        result = result.multiply(countWays(totalTime, record))
+        i += 1
+    }
+    result
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(lines)}")
+
+fn part2(lines: array[string]): BigDecimal {
+    val totalTime = bd(lines[0].split("\\s*:\\s*", 2)[1].replaceAll("\\s+",""))
+    val record = bd(lines[1].split("\\s*:\\s*", 2)[1].replaceAll("\\s+",""))
+    val ways = countWays(totalTime, record)
+    ways
+}
+
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(lines)}")

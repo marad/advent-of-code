@@ -1,0 +1,210 @@
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math { lcm }
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.list.linked { LinkedList, newLinkedList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
+import std/lang.unsafe { array as unsafeArray }
+import std/lang.interop as iop
+
+val maxInt = 9223372036854775807
+
+val prod = load("aoc-23/input20.txt").trim()
+val test = load("aoc-23/test20.txt").trim()
+
+val plines = prod.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+val tinput = Input(tlines)
+val pinput = Input(plines)
+
+// data Type = Broadcaster | FlipFlop | Conj
+// data Module(name: string, type: Type, outputs: ArrayList[string], state: bool)
+
+data Signal = Hi | Lo
+data Pulse(from: string, to: string, signal: Signal)
+data Module = Broadcaster(name: string, outputs: ArrayList[string]) | FlipFlop(name: string, isOn: bool, outputs: ArrayList[string]) | Conj(name: string, inputs: Map[string,Signal], outputs: ArrayList[string]) | Debug
+
+
+// fn flipFlop(inputs: ArrayList[bool]): bool {
+
+// }
+
+fn parseInput(lines: array[string]): Map[string, Module] {
+    val result = mapOf[string, Module]()
+    val inputs = mapOf[string, string]()
+    lines.forEach({ line: string -> 
+        var tmp = line.trim().split(" -> ")
+        val type = tmp[0][0]
+        var name = tmp[0].substring(1)
+        tmp = tmp[1].split(", ")
+        val outputs = newArrayList[string]()
+        tmp.forEach({ output: string -> 
+            outputs.add(output)
+        })
+        val module = if (type == "b") {
+            Broadcaster("broadcaster", outputs)
+        } else if (type == "%") {
+            FlipFlop(name, false, outputs)
+        } else {
+            Conj(name, mapOf[string,Signal](), outputs)
+        }
+
+        result.put(module.name, module)
+    })
+
+    result.values().forEach({ it: Module ->
+        if (it is Conj) {
+            // search all the modules that output to this module
+
+            val modules = result.values()
+            var i = 0
+            while (i < modules.size()) {
+                val mod = modules[i] as Broadcaster
+                if (mod.outputs.contains(it.name)) {
+                    it.inputs.put(mod.name, Lo)
+                }
+                i += 1
+            }
+        }
+    })
+
+    result
+}
+
+data Counts(lo: int, hi: int)
+
+fn getModule(modules: Map[string, Module], name: string): Module {
+    val module = iop.invokeMember(modules.impl, "get", arrayOf(name))
+
+    if (iop.isNull(module)) {
+        Debug
+    } else {
+        module as Module
+    }
+}
+
+fn pushButton(modules: Map[string, Module], foo: (string) -> unit): Counts {
+    val q = newLinkedList[Pulse]()
+    q.addLast(Pulse("button", "broadcaster", Lo))
+
+    var loCount = 0
+    var hiCount = 0
+
+    // fn 3757
+    // fh 3843
+    // lk 4003
+    // hh 4027
+
+    while(q.size() > 0) {
+        val pulse = q.pop()
+        // println(pulse)
+
+        if (pulse.signal == Hi) {
+            hiCount += 1
+        } else {
+            loCount += 1
+        }
+
+        // fh, hh, fn, lk
+        if ((pulse.from == "fh" || pulse.from == "hh" || pulse.from == "fn" || pulse.from == "lk") && pulse.signal == Hi) {
+            foo(pulse.from)
+        }
+        
+
+        // val targetModule: Module = (((modules as Map[string,string]).get(pulse.to) as Just).value) as Module
+        val targetModule = modules.getModule(pulse.to)
+        if (targetModule is Broadcaster) {
+            targetModule.outputs.forEach({ out: string ->
+                q.addLast(Pulse(targetModule.name, out, pulse.signal))
+            })
+        } else if (targetModule is FlipFlop) {
+            // Hi signal is ignored
+            if (pulse.signal == Lo) {
+                if (targetModule.isOn) {
+                    targetModule.isOn = false
+                    targetModule.outputs.forEach({ out: string -> q.addLast(Pulse(targetModule.name, out, Lo))})
+                } else {
+                    targetModule.isOn = true
+                    targetModule.outputs.forEach({ out: string -> q.addLast(Pulse(targetModule.name, out, Hi))})
+                }
+
+            }
+        } else if (targetModule is Conj) {
+            targetModule.inputs.put(pulse.from, pulse.signal)
+            val allHi = targetModule.inputs.values().all({ it: string -> (it as Signal) == Hi})
+
+            val toSend = if (allHi) { Lo } else { Hi }
+            targetModule.outputs.forEach({ out: string -> q.addLast(Pulse(targetModule.name, out, toSend))})
+        }
+    }
+
+    // println("Hi: $hiCount, Lo: $loCount")
+    Counts(loCount, hiCount)
+}
+
+fn part1(lines: array[string]): int {
+    val modules = lines.parseInput()
+
+    var i = 0
+    var hiCount = 0
+    var loCount = 0
+    while (i < 1000) {
+        val counts = modules.pushButton({ it:string -> })
+        hiCount += (counts.hi)
+        loCount += (counts.lo)
+        i+= 1
+    }
+
+
+    hiCount * loCount
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+fn part2(lines: array[string]): int {
+    // rx will send low if all inputs are hi (conjunction node)
+    // rx receives inputs from 4 other conjunction nodes: fn, fh, lk, hh
+    // part2 prints at which button press each of the 4 nodes above send hi pulse
+    // then it's a matter of calculating the cycle length for each one based on printed output
+    val modules = lines.parseInput()
+
+    val cycles = arrayOf[int](0,0,0,0)
+    val previousPress = arrayOf[int](0,0,0,0)
+
+    var i = 0
+    while (i < 20000) {
+        modules.pushButton({ name: string -> 
+            val idx = when {
+                name == "fn" -> 0
+                name == "fh" -> 1
+                name == "lk" -> 2
+                name == "hh" -> 3
+                else -> 0
+            }
+
+            cycles[idx] = (i - previousPress[idx])
+            previousPress[idx] = i
+        })
+        i += 1
+    }
+
+    var result = 1
+    // rx will send lo when ALL its inputs cycles synchronize, thus - lcm
+    cycles.forEach({v:int ->
+        result = lcm(result, v)
+    })
+
+    result
+}
+
+println("Part 2 (prod): ${part2(plines)}")
+0

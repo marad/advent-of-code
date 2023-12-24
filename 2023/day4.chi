@@ -1,0 +1,117 @@
+
+import aoc/lib { load, splitOnNewLines }
+import std/lang.interop as iop { lookupHostSymbol }
+
+val input = load("aoc-23/input4.txt")
+val test = load("aoc-23/test4.txt")
+
+
+val lines = input.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+fn sqr(base: int, x:int): int {
+    var a = 1
+    var b = x - 1
+    while(b >= 0) {
+        a *= base
+        b -= 1
+    }
+    a
+}
+
+data pub Set[T](impl: any)
+
+fn emptySet[T](): Set[T] {
+    val HashSet = lookupHostSymbol("java.util.HashSet")
+    val impl = iop.invokeMember(HashSet, "newHashSet", arrayOf(0))
+    Set(impl)
+}
+
+fn add[T](set: Set[T], t: T) {
+    iop.invokeMember(set.impl, "add", arrayOf(t))
+}
+
+fn size[T](set: Set[T]): int {
+    iop.invokeMember(set.impl, "size", arrayOf()) as int
+}
+
+fn contains[T](set: Set[T], t: T): bool {
+    iop.invokeMember(set.impl, "contains", arrayOf(t)) as bool
+}
+
+fn cardScore(line: string): int {
+    val tmp1 = line.split(":")
+    val card = tmp1[0].split("\\s+")[1] as int
+    var tmp2 = tmp1[1].split("\\|")
+    var winning = tmp2[0].split("\\s+")
+    var numbers = tmp2[1].trim().split("\\s+")
+
+    val s = emptySet[string]()
+    winning.forEach({ it:string -> s.add(it) })
+
+    var count = 0
+    var i = 0
+    while(i < numbers.size()) {
+        val number = numbers[i]
+        if (s.contains(number)) {
+            count += 1
+        }
+        i += 1
+    }
+
+    if (count > 0) {
+        sqr(2, count-1)
+    } else {
+        0
+    }
+}
+
+
+println("Part 1 (test): ${tlines.map(cardScore).sum()}")
+println("Part 1 (prod): ${lines.map(cardScore).sum()}")
+
+
+fn cards(line: string): int {
+    val tmp1 = line.split(":")
+    val card = tmp1[0].split("\\s+")[1] as int
+    var tmp2 = tmp1[1].split("\\|")
+    var winning = tmp2[0].split("\\s+")
+    var numbers = tmp2[1].trim().split("\\s+")
+
+    val s = emptySet[string]()
+    winning.forEach({ it:string -> s.add(it) })
+
+    var count = 0
+    var i = 0
+    while(i < numbers.size()) {
+        val number = numbers[i]
+        if (s.contains(number)) {
+            count += 1
+        }
+        i += 1
+    }
+
+    count
+}
+
+
+
+fn part2(lines: array[string]): int {
+    var index = 0
+    val cardCount = array(lines.size(), 1)
+
+    while(index < lines.size()) {
+        val instances = cardCount[index]
+        var count = cards(lines[index])
+        while(count > 0) {
+            count -= 1
+            val cardIndex = index + count + 1
+            cardCount[cardIndex] = (cardCount[cardIndex] + instances)
+        }
+        index += 1
+    }
+    cardCount.sum()
+}
+
+println("Part 2 (test): ${part2(tlines)}")
+println("Part 2 (prod): ${part2(lines)}")

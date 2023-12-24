@@ -1,0 +1,125 @@
+
+import aoc/lib as lib { load, splitOnNewLines }
+import aoc/direction { Direction, Up, Down, Left, Right }
+// import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+import aoc/input { Input }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/collections.queue.filo as filo { FiloQueue }
+import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
+import std/lang.unsafe { array as unsafeArray }
+import std/lang.interop as iop
+
+val maxInt = 9223372036854775807
+
+val prod = load("aoc-23/input24.txt").trim()
+val test = load("aoc-23/test24.txt").trim()
+
+val stringLines = prod.trim().splitOnNewLines()
+
+val testArea = if (stringLines.size() > 10) {
+    Rect(Point(200000000000000, 200000000000000), Point(400000000000000, 400000000000000))
+} else {
+    Rect(Point(7,7), Point(27, 27))
+}
+
+val lines = stringLines.map({ it: string -> 
+    val t = it.replaceAll("@",",").split("\\s*,\\s*").map({it:string -> it as float})
+    val a = (t[4]) / (t[3])
+    val b = (t[1]) - a * (t[0])
+    Line(a,b,t)
+})
+
+data Point(x: float, y: float)
+data Rect(start: Point, end: Point)
+data Section(name: string, start: array[int], end: array[int])
+data Line(a: float, b: float, def: array[float])
+
+fn calc(line: Line, x: float): float { line.a * (x as float) + line.b }
+
+
+fn sameSign(a: float, b: float): bool {
+    (a<0) == (b<0)
+}
+
+fn inTheFuture(line: Line, p: Point): bool {
+    val refX = line.def[0]
+    val refY = line.def[1]
+
+    val dirX = p.x - refX
+    val dirY = p.y - refY
+
+    sameSign(dirX, line.def[3]) && sameSign(dirY, line.def[4])
+}
+
+fn contains(rect: Rect, p: Point): bool {
+    rect.start.x <= p.x && p.x <= rect.end.x && rect.start.y <= p.y && p.y <= rect.end.y
+}
+
+
+fn intersection(u: Line, v: Line): Option[Point] {
+    if (math.abs(u.a - v.a) < 0.0000001) {
+        Nothing
+    } else {
+        val x: float = (v.b - u.b) / (u.a - v.a)
+        val y: float = (u.a * x) + u.b
+        Just(Point(x, y))
+    }
+}
+
+var part1Solution = 0
+var i = 0
+val equotations = newArrayList[string]()
+while (i < lines.size()) {
+    val u = lines[i]
+
+    //println("${u.a}x+${u.b}")
+
+
+
+    var j = i+1
+    while (j < lines.size()) {
+        val v = lines[j]
+        val inter = intersection(u, v)
+
+        if (inter is Just) {
+            val p = inter.value as Point
+            if (testArea.contains(p) && u.inTheFuture(p) && v.inTheFuture(p)) {
+                part1Solution += 1
+            }
+        }
+
+        j += 1
+    }
+    i += 1
+}
+
+// part 2
+stringLines.forEach({ it:string ->
+    val def = it.replaceAll("@",",").split("\\s*,\\s*")
+    val sx = def[0]
+    val sy = def[1]
+    val sz = def[2]
+    val vx = def[3]
+    val vy = def[4]
+    val vz = def[5]
+
+    equotations.add("(xr - $sx) * ($vy - vyr) - (yr - $sy) * ($vx - vxr)")
+    equotations.add("(yr - $sy) * ($vz - vzr) - (zr - $sz) * ($vy - vyr)")
+})
+
+// Yes it's python. I'm not going to implement linear algebra in Chi for this day xD
+println("import sympy")
+println("xr, yr, zr, vxr, vyr, vzr = sympy.symbols(\"xr, yr, zr, vxr, vyr, vzr\")")
+println("eqs = []")
+equotations.forEach({eq: string ->
+    println("eqs.append($eq)")
+})
+println("answer = sympy.solve(eqs)[0]")
+
+println("print(\"Part 1: $part1Solution\")")
+println("print(\"Part 2: \" + str(answer[xr] + answer[yr] + answer[zr]))")

@@ -1,0 +1,43 @@
+package aoc/input
+
+import aoc/point { Point }
+import aoc/tilemap as tilemap { TileMap }
+
+data pub Input(pub lines: array[string])
+
+pub fn width(input: Input): int { input.lines[0].length() }
+pub fn height(input: Input): int { input.lines.size() }
+
+pub fn get(input: Input, p: Point): string {
+    input.get(p.x, p.y)
+}
+
+pub fn get(input: Input, x: int, y: int): string { input.lines[y][x] }
+
+pub fn toTileMap(input: Input): TileMap[string] {
+    val m = tilemap.empty[string](input.width(), input.height())
+    var y = 0
+    while (y < input.height()) {
+        var x = 0
+        while (x < input.width()) {
+            m.set(x, y, input.get(x, y))
+            x += 1
+        }
+        y += 1
+    }
+    m
+}
+
+pub fn toIntTileMap(input: Input): TileMap[int] {
+    val m = tilemap.empty[int](input.width(), input.height())
+    var y = 0
+    while (y < input.height()) {
+        var x = 0
+        while (x < input.width()) {
+            m.set(x, y, input.get(x, y) as int)
+            x += 1
+        }
+        y += 1
+    }
+    m
+}

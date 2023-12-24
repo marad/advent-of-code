@@ -1,0 +1,154 @@
+
+import aoc/lib as lib { load, splitOnNewLines }
+import std/string as str
+import std/math as math
+import std/collections.map as map { Map, newMap }
+import std/collections.set as set { Set, newSet }
+import std/collections.arraylist as list { ArrayList, newArrayList }
+import std/lang.interop as iop
+
+val input = load("aoc-23/input8.txt")
+val test = load("aoc-23/test8.txt")
+
+val plines = input.splitOnNewLines()
+val tlines = test.splitOnNewLines()
+
+fn entryCount(lines: array[string]): int {
+    lines.size() - 2
+}
+
+
+fn createIndexMap(lines: array[string]): Map[string, int] {
+    val m = newMap[string,int]()
+    var index = 2
+
+    while(index < lines.size()) {
+        var id = lines[index].split("\\s+")[0].trim()
+        m.put(id, index)
+        index += 1
+    }
+    
+    m
+}
+
+fn part1(lines: array[string]): int {
+    val indexMap = createIndexMap(lines)
+
+    val instructions = lines[0]
+    var instrIndex = 0
+    var currentIndex = indexMap.getOrDefault("AAA", -1)
+    var steps = 0
+    while(true) {
+        val instr = instructions[instrIndex]
+        instrIndex = (instrIndex + 1) % (instructions.length() - 1)
+
+
+        val tmp = lines[currentIndex].substring(7, 8).split("\\s*,\\s*")
+
+        val nextNode = if (instr == "L") {
+            tmp[0].trim()
+        } else {
+            tmp[1].trim()
+        }
+
+        steps += 1
+
+        currentIndex = indexMap.getOrDefault(nextNode, -1)
+        //println("Instr: $instr, next node: '$nextNode', index: $currentIndex")
+
+        if (nextNode == "ZZZ") {
+            break
+        }
+    }
+
+    steps
+}
+
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(plines)}")
+
+// ============= part 2 ==============
+
+val tlines2 = load("aoc-23/test8_1.txt").splitOnNewLines()
+
+data State(node: string, instrIndex: int, nodeIndex: int)
+
+fn createPaths(lines: array[string], indexMap: Map[string, int]): ArrayList[State] {
+    var i = 2
+    val result = newArrayList[State]()
+    while(i < lines.size()) {
+        val node = lines[i].split("\\s+")[0].trim()
+        if (node.endsWith("A")) {
+            val nodeIndex = indexMap.getOrDefault(node, -1)
+            val state = State(node, 0, nodeIndex)
+            result.add(state)
+        }
+
+        i += 1
+    }
+    result
+}
+
+fn nextState(state: State, lines: array[string], indexMap: Map[string, int]): State {
+    val instructions = lines[0]
+    val instr = instructions[state.instrIndex]
+    val nextInstr = (state.instrIndex + 1) % (instructions.length() - 1)
+
+    val tmp = lines[state.nodeIndex].substring(7, 8).split("\\s*,\\s*")
+
+    val nextNode = if (instr == "L") {
+        tmp[0].trim()
+    } else {
+        tmp[1].trim()
+    }
+
+    val nextNodeIndex = indexMap.getOrDefault(nextNode, -1)
+
+    state.node = nextNode
+    state.nodeIndex = nextNodeIndex
+    state.instrIndex = nextInstr
+    state
+}
+
+fn findCycleLength(state: State, lines: array[string], indexMap: Map[string, int]): int {
+    var measure = false
+    var len = 0
+    while(true) {
+        val lastNode = state.node
+        state.nextState(lines, indexMap)
+        val isFinalNode = lastNode.endsWith("Z")
+        if (measure) { len += 1 }
+        if (measure && isFinalNode) { break }
+        if (!measure && isFinalNode) { measure = true }
+    }
+    len
+}
+
+
+fn part2(lines: array[string]): int {
+    val indexMap = createIndexMap(lines)
+    val paths = createPaths(lines, indexMap)
+
+    val len1 = paths.get(0).unwrap().findCycleLength(lines, indexMap)
+    val len2 = paths.get(1).unwrap().findCycleLength(lines, indexMap)
+    println("\tPath 1 cycle len: $len1")
+    println("\tPath 2 cycle len: $len2")
+
+    var lcm = math.lcm(len1, len2)
+
+    var i = 2
+    while(i < paths.size()) {
+        val path = paths.get(i).unwrap()
+        val len = path.findCycleLength(lines, indexMap)
+        println("\tPath $i cycle len: $len")
+
+        lcm = math.lcm(lcm, len)
+
+        i += 1
+    }
+
+    lcm
+}
+
+println("Part 2 (test): ${part2(tlines2)}")
+println("Part 2 (prod): ${part2(plines)}")
