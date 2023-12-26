@@ -1,7 +1,7 @@
 import aoc/lib as lib { load, splitOnNewLines }
 import aoc/direction { Direction, Up, Down, Left, Right }
 import aoc/point { Point }
-import aoc/tilemap { TileMap }
+import aoc/tilemap as tilemap { TileMap }
 import aoc/input { Input }
 import std/string as str
 import std/math as math
@@ -12,21 +12,13 @@ import std/collections.queue.filo as filo { FiloQueue }
 import std/lang.unsafe { array as unsafeArray }
 
 
-val prod = load("aoc-23/input16.txt").trim()
-val test = load("aoc-23/test16.txt").trim()
+val prod = load("input16.txt").trim()
+val test = load("test16.txt").trim()
 
 val plines = prod.splitOnNewLines()
 val tlines = test.splitOnNewLines()
 
 data BeamRoot(tile: Point, dir: Direction)
-
-fn from(input: Input): TileMap[int] { 
-    val width = input.width()
-    val height = input.height()
-    val size = width * height
-    val map = array[int](size, 0)
-    TileMap(map, width, height, size)
-}
 
 fn follow(beamRoot: BeamRoot, branchQueue: FiloQueue[BeamRoot], energized: TileMap, input: Input) {
     var currentTile = beamRoot.tile
@@ -89,7 +81,7 @@ fn follow(beamRoot: BeamRoot, branchQueue: FiloQueue[BeamRoot], energized: TileM
 
 fn part1(lines: array[string], initialBeamRoot: BeamRoot): int {
     val input = Input(lines)
-    val energized = from(input)
+    val energized = tilemap.empty(input.width(), input.height(), 0)
     val rootQueue = filo.of(initialBeamRoot)
     val pastBeams = setOf[string]()
     while (rootQueue.size() > 0) {

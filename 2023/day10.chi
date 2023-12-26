@@ -4,11 +4,10 @@ import std/math as math
 import std/collections.map as map { Map, newMap }
 import std/collections.set as set { Set, newSet }
 import std/collections.arraylist as list { ArrayList, newArrayList }
-import std/lang.unsafe { array as unsafeArray }
 
 
-val prod = load("aoc-23/input10.txt")
-val test = load("aoc-23/test10.txt")
+val prod = load("input10.txt")
+val test = load("test10.txt")
 
 val plines = prod.splitOnNewLines()
 val tlines = test.splitOnNewLines()
@@ -95,7 +94,7 @@ fn getAt(dist: array[array[int]], pos: Point): int {
 }
 
 fn genDist(lines: array[string]): array[array[int]] {
-    val dist = unsafeArray[array[int]](lines.getHeight())
+    val dist = array[array[int]](lines.getHeight(), arrayOf[int]())
     var i = 0
     while (i < lines.getHeight()) {
         dist[i] = array[int](lines.getWidth(), -1)
@@ -175,7 +174,7 @@ fn part2(lines: array[string]): int {
 
 
 
-val test2 = load("aoc-23/test10_1.txt")
+val test2 = load("test10_1.txt")
 
 val tlines2 = test2.splitOnNewLines()
 

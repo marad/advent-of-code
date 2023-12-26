@@ -1,0 +1,34 @@
+package aoc/lib
+
+import std/io { readString }
+import std/lang { eval, clearPackage }
+import std/lang.interop as iop { lookupHostSymbol }
+
+pub effect panic(msg: string)
+
+pub fn load(file: string): string {
+    readString(file)
+}
+
+pub fn splitOnNewLines(s: string): array[string] {
+    s.split("\n", -1)
+}
+
+pub fn l(day: int) {
+    clearPackage("user", "default")
+    eval(load("day${day}.chi"))
+}
+
+pub fn p(day:int) {
+    clearPackage("user", "default")
+    eval("import aoc/lib { load }
+        var input = load(\"input${day}.txt\").trim()")
+    eval(load("day${day}.chi"))
+}
+
+pub fn t(day:int) {
+    clearPackage("user", "default")
+    eval("import aoc/lib { load }
+        var input = load(\"test${day}.txt\").trim()")
+    eval(load("day${day}.chi"))
+}

@@ -15,7 +15,7 @@ pub fn get(input: Input, p: Point): string {
 pub fn get(input: Input, x: int, y: int): string { input.lines[y][x] }
 
 pub fn toTileMap(input: Input): TileMap[string] {
-    val m = tilemap.empty[string](input.width(), input.height())
+    val m = tilemap.empty[string](input.width(), input.height(), "")
     var y = 0
     while (y < input.height()) {
         var x = 0
@@ -29,7 +29,7 @@ pub fn toTileMap(input: Input): TileMap[string] {
 }
 
 pub fn toIntTileMap(input: Input): TileMap[int] {
-    val m = tilemap.empty[int](input.width(), input.height())
+    val m = tilemap.empty[int](input.width(), input.height(), 0)
     var y = 0
     while (y < input.height()) {
         var x = 0

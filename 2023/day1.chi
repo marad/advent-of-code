@@ -3,7 +3,7 @@ package aoc.y23/day1
 import std/string as s { isDigit }
 import aoc/lib as aoc { splitOnNewLines, load, panic }
 
-val input = load("aoc-23/input1.txt")
+val input = load("input1.txt")
 val lines = input.splitOnNewLines()
 
 // part 1

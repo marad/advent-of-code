@@ -3,8 +3,8 @@ import aoc/lib { load, splitOnNewLines }
 import std/lang.interop as iop { lookupHostSymbol }
 import std/collections.set as set { newSet }
 
-val input = load("aoc-23/input3.txt")
-val test = load("aoc-23/test3.txt")
+val input = load("input3.txt")
+val test = load("test3.txt")
 
 
 val lines = input.splitOnNewLines()

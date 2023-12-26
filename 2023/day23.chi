@@ -12,11 +12,12 @@ import std/collections.arraylist as list { ArrayList, newArrayList }
 import std/collections.list.linked as fifo { LinkedList, newLinkedList }
 import std/collections.queue.filo as filo { FiloQueue }
 import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
-import std/lang.unsafe { array as unsafeArray }
 import std/lang.interop as iop
+import std/io { programArguments }
 
 val maxInt = 9223372036854775807
 
+val input = load(programArguments()[0])
 val lines = input.splitOnNewLines()
 
 val s = Point(1, 0)
@@ -26,7 +27,7 @@ fn part1(): int {
     val tm = Input(lines).toTileMap()
     val s = Point(1, 0)
     val goal = Point(tm.width - 2, tm.height - 1)
-    val dist = tilemap.empty[int](tm.width, tm.height)
+    val dist = tilemap.empty[int](tm.width, tm.height, 0)
     dist.forEachTDLR({it:Point -> dist.set(it, -maxInt)})
     dist.set(s, 0)
 
@@ -74,7 +75,7 @@ fn part1(): int {
     dist.get(goal)
 }
 
-// println(part1())
+println("Part 1: ${part1()}")
 
 fn neighbours(p: Point): array[Point] { arrayOf(p.up(), p.down(), p.left(), p.right() ) }
 
@@ -128,8 +129,7 @@ data Node(pos: Point, dist: int)
 
 fn part2(): int {
     val tm = Input(lines).toTileMap()
-    val visited = tilemap.empty[bool](tm.width, tm.height)
-    visited.forEachTDLR({it:Point -> visited.set(it, false)})
+    val visited = tilemap.empty[bool](tm.width, tm.height, false)
 
     val points = newArrayList[Point]()
     points.add(s)
@@ -206,7 +206,7 @@ fn part2(): int {
         }
     })
 
-    println(graph)
+    // println(graph)
 
     val seen = setOf[Point]()
     dfs(graph, seen, s)

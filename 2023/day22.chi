@@ -12,7 +12,6 @@ import std/collections.arraylist as list { ArrayList, newArrayList }
 import std/collections.list.linked as fifo { LinkedList, newLinkedList }
 import std/collections.queue.filo as filo { FiloQueue }
 import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
-import std/lang.unsafe { array as unsafeArray }
 import std/lang.interop as iop
 
 
@@ -58,8 +57,8 @@ while (i < bricks.size()) {
 bricks.sort(bottomUp)
 
 // for each block gather its supporters and blocks that it is supporting
-val supports: array[Set[int]] = unsafeArray[Set[int]](bricks.size())
-val supportedBy: array[Set[int]] = unsafeArray[Set[int]](bricks.size())
+val supports: array[Set[int]] = array[Set[int]](bricks.size(), setOf[int]())
+val supportedBy: array[Set[int]] = array[Set[int]](bricks.size(), setOf[int]())
 i = 0
 while (i < supports.size()) {
     supports[i] = setOf[int]()

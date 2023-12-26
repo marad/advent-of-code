@@ -1,9 +1,9 @@
 
-import aoc/lib as lib { load, splitOnNewLines, bigDecimalOf as bd, BigDecimal }
-import std/lang.interop as iop { lookupHostSymbol }
+import aoc/lib as lib { load, splitOnNewLines }
+import std/math.bigdecimal { BigDecimal, of as bd }
 
-val input = load("aoc-23/input6.txt")
-val test = load("aoc-23/test6.txt")
+val input = load("input6.txt")
+val test = load("test6.txt")
 
 val lines = input.splitOnNewLines()
 val tlines = test.splitOnNewLines()

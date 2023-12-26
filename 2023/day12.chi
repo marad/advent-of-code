@@ -7,8 +7,8 @@ import std/collections.arraylist as list { ArrayList, newArrayList }
 import std/lang.unsafe { array as unsafeArray }
 
 
-val prod = load("aoc-23/input12.txt")
-val test = load("aoc-23/test12.txt")
+val prod = load("input12.txt")
+val test = load("test12.txt")
 
 val plines = prod.splitOnNewLines()
 val tlines = test.splitOnNewLines()

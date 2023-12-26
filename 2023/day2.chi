@@ -7,8 +7,8 @@ import std/collections.arraylist as list { ArrayList, newArrayList }
 import std/lang.interop as iop
 
 
-val prod = load("aoc-23/input2.txt")
-val test = load("aoc-23/test2.txt")
+val prod = load("input2.txt")
+val test = load("test2.txt")
 
 val plines = prod.splitOnNewLines()
 val tlines = test.splitOnNewLines()

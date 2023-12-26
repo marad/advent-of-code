@@ -7,8 +7,8 @@ import std/collections.set as set { Set, newSet }
 import std/collections.arraylist as list { ArrayList, newArrayList }
 import std/lang.interop as iop
 
-val input = load("aoc-23/input8.txt")
-val test = load("aoc-23/test8.txt")
+val input = load("input8.txt")
+val test = load("test8.txt")
 
 val plines = input.splitOnNewLines()
 val tlines = test.splitOnNewLines()
@@ -69,7 +69,7 @@ println("Part 1 (prod): ${part1(plines)}")
 
 // ============= part 2 ==============
 
-val tlines2 = load("aoc-23/test8_1.txt").splitOnNewLines()
+val tlines2 = load("test8_1.txt").splitOnNewLines()
 
 data State(node: string, instrIndex: int, nodeIndex: int)
 
@@ -131,8 +131,8 @@ fn part2(lines: array[string]): int {
 
     val len1 = paths.get(0).unwrap().findCycleLength(lines, indexMap)
     val len2 = paths.get(1).unwrap().findCycleLength(lines, indexMap)
-    println("\tPath 1 cycle len: $len1")
-    println("\tPath 2 cycle len: $len2")
+    // println("\tPath 1 cycle len: $len1")
+    // println("\tPath 2 cycle len: $len2")
 
     var lcm = math.lcm(len1, len2)
 
@@ -140,7 +140,7 @@ fn part2(lines: array[string]): int {
     while(i < paths.size()) {
         val path = paths.get(i).unwrap()
         val len = path.findCycleLength(lines, indexMap)
-        println("\tPath $i cycle len: $len")
+        // println("\tPath $i cycle len: $len")
 
         lcm = math.lcm(lcm, len)
 

@@ -2,8 +2,8 @@
 import aoc/lib { load, splitOnNewLines }
 import std/lang.interop as iop { lookupHostSymbol }
 
-val input = load("aoc-23/input4.txt")
-val test = load("aoc-23/test4.txt")
+val input = load("input4.txt")
+val test = load("test4.txt")
 
 
 val lines = input.splitOnNewLines()

@@ -16,8 +16,8 @@ import std/lang.interop as iop
 
 val maxInt = 9223372036854775807
 
-val prod = load("aoc-23/input24.txt").trim()
-val test = load("aoc-23/test24.txt").trim()
+val prod = load("input24.txt").trim()
+val test = load("test24.txt").trim()
 
 val stringLines = prod.trim().splitOnNewLines()
 

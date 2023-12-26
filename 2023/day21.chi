@@ -16,8 +16,8 @@ import std/lang.interop as iop
 
 val maxInt = 9223372036854775807
 
-val prod = load("aoc-23/input21.txt").trim()
-val test = load("aoc-23/test21.txt").trim()
+val prod = load("input21.txt").trim()
+val test = load("test21.txt").trim()
 
 val plines = prod.splitOnNewLines()
 val tlines = test.splitOnNewLines()
@@ -83,8 +83,8 @@ fn part1(lines: array[string], maxSteps: int): int {
     plots
 }
 
-// println("Part 1 (test): ${part1(tlines, 6)}")
-// println("Part 1 (prod): ${part1(plines, 64)}")
+println("Part 1 (test): ${part1(tlines, 6)}")
+println("Part 1 (prod): ${part1(plines, 64)}")
 
 fn encode(p: Point): int {
     p.x << 32 | p.y

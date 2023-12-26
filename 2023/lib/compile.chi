@@ -1,0 +1,18 @@
+import std/io { readString }
+import std/lang { eval }
+
+println("Compiling AOC lib!")
+
+fn loadAoc(path: string) {
+    println("\tCompiling $path")
+    eval(readString(path))
+}
+
+loadAoc("lib/direction.chi")
+loadAoc("lib/point.chi")
+loadAoc("lib/tilemap.chi")
+loadAoc("lib/input.chi")
+loadAoc("lib/aoclib.chi")
+println("Saving module AOC")
+saveModule("aoc", "mod/aoc.chim")
+println("Done!")

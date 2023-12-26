@@ -1,13 +1,12 @@
 package aoc/tilemap
 
 import aoc/point { Point }
-import std/lang.unsafe { array as unsafeArray }
 
 data pub TileMap[T](pub map: array[T], pub width: int, pub height: int, pub size: int, pub infinite: bool)
 
-pub fn empty[T](width: int, height: int): TileMap[T] { 
+pub fn empty[T](width: int, height: int, default: T): TileMap[T] { 
     val size = width * height
-    val map = unsafeArray[T](size)
+    val map = array[T](size, default)
     TileMap(map, width, height, size, false)
 }
 
@@ -87,7 +86,7 @@ pub fn show[T](tileMap: TileMap[T], splitter: string) {
 }
 
 pub fn toIntTileMap[T](tm: TileMap[T], mapfunc: (T) -> int): TileMap[int] {
-    val result = empty[int](tm.width, tm.height)
+    val result = empty[int](tm.width, tm.height, 0)
     tm.forEachTDLR({ pos: Point -> 
         val t = tm.get(pos)
         result.set(pos, mapfunc(t))

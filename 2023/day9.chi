@@ -7,8 +7,8 @@ import std/collections.set as set { Set, newSet }
 import std/collections.arraylist as list { ArrayList, newArrayList }
 
 
-val prod = load("aoc-23/input9.txt")
-val test = load("aoc-23/test9.txt")
+val prod = load("input9.txt")
+val test = load("test9.txt")
 
 val plines = prod.splitOnNewLines()
 val tlines = test.splitOnNewLines()

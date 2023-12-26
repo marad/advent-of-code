@@ -3,8 +3,8 @@ import std/lang.interop as iop { lookupHostSymbol }
 import std/string as str
 import std/math as math
 
-val input = load("aoc-23/input7.txt")
-val test = load("aoc-23/test7.txt")
+val input = load("input7.txt")
+val test = load("test7.txt")
 
 val lines = input.splitOnNewLines()
 val tlines = test.splitOnNewLines()
@@ -117,7 +117,7 @@ fn values[K,V](m: Map[K,V]): array[V] {
 
 fn sort(s: string): string {
     val cp = s.codePoints()
-    cp.sort()
+    cp.sort({ a:int, b:int -> a - b })
     str.fromCodePoints(cp)
 }
 
@@ -290,8 +290,8 @@ fn part1(lines: array[string]): int {
     sum
 }
 
-//println("Part 1 (test): ${part1(tlines)}")
-//println("Part 1 (prod): ${part1(lines)}")
+println("Part 1 (test): ${part1(tlines)}")
+println("Part 1 (prod): ${part1(lines)}")
 
 // ----------------------------------------------------
 
@@ -403,4 +403,4 @@ fn part2(lines: array[string]): int {
 
 
 println("Part 2 (test): ${part2(tlines)}")
-println("Part 1 (prod): ${part2(lines)}")
+println("Part 2 (prod): ${part2(lines)}")
