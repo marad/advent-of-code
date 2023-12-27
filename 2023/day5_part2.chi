@@ -1,0 +1,123 @@
+import aoc/lib { load }
+import std/math as math
+
+val input = load("input5.txt").split("\r\n\r\n")
+// val input = load("test5.txt").split("\r\n\r\n")
+
+val blocks = input.map(readBlock)
+blocks.removeAt(0)
+
+var seeds = input[0].split(": ")[1].readSeeds()
+
+fn stoi(s:string): int { s as int }
+
+fn readSeeds(line: string): array[array[int]] {
+    val tmp = line.split(" ")
+    var i = 0
+    val result = arrayOf[array[int]]()
+    while i < tmp.size() {
+        val a = tmp[i] as int
+        val b = a + tmp[i+1] as int
+
+        result.add(arrayOf[int](a, b))
+        i += 2
+    }
+    result
+}
+
+fn readBlock(b: string): array[array[int]] {
+    val lines = b.split("\r\n")
+    val result = array(lines.size()-1, arrayOf[int]())
+    var i = 1 // skip header
+    while (i < lines.size()) {
+        val tmp = (lines[i]).split(" ").map(stoi)
+        val dst = tmp[0]
+        val src = tmp[1]
+        val len = tmp[2]
+        val end = src + len
+        val offset = dst - src
+        result[i-1] = arrayOf(src, end, offset)
+        i += 1
+    }
+    result
+}
+
+fn contains(range: array[int], value: int): bool {
+    range[0] <= value && value < range[1]
+}
+
+fn mapValue(block: array[array[int]], value: int): int {
+    var i = 0
+    var result = value
+    while i < block.size() {
+        val range = block[i]
+        if (range.contains(value)) {
+            result = value + range[2]
+            break
+        }
+        i += 1
+    }
+    result
+}
+
+
+fn push[T](stack: array[T], value: T) {
+    stack.add(value)
+}
+
+fn pop[T](stack: array[T]): T {
+    val idx = stack.size() - 1
+    val result = stack[idx]
+    stack.removeAt(idx)
+    result
+}
+
+var i = 0
+while i < blocks.size() {
+    val block = blocks[i]
+    val new = arrayOf[array[int]]()
+
+    while seeds.size() > 0 {
+        val seedRange = seeds.pop()
+        val s = seedRange[0]
+        val e = seedRange[1]
+
+        var j = 0
+        var matched = false
+        while j < block.size() {
+            var range = block[j]
+            val rs = range[0]
+            val re = range[1]
+            val offset = range[2]
+
+            val overlapStart = math.max(s, rs)
+            val overlapEnd = math.min(e, re)
+
+            // if range is not empty
+            if overlapStart < overlapEnd { 
+                new.add(arrayOf[int](overlapStart + offset, overlapEnd + offset))
+                if overlapStart > s {
+                    seeds.push(arrayOf(s, overlapStart))
+                }
+                if e > overlapEnd {
+                    seeds.push(arrayOf(overlapEnd, e))
+                }
+                matched = true
+                break
+            }
+
+            j += 1
+        }
+
+        if !matched {
+            new.push(arrayOf(s, e))
+        }
+    }
+
+    seeds = new
+    i += 1
+}
+
+seeds.sort({ a: array[int], b: array[int] -> a[0] - b[0]})
+
+println(seeds[0])
