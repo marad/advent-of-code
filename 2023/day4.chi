@@ -106,7 +106,7 @@ fn part2(lines: array[string]): int {
         while(count > 0) {
             count -= 1
             val cardIndex = index + count + 1
-            cardCount[cardIndex] = (cardCount[cardIndex] + instances)
+            cardCount[cardIndex] = cardCount[cardIndex] + instances
         }
         index += 1
     }

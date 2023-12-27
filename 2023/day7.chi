@@ -211,7 +211,7 @@ fn type(cards: string): HandType {
         } else {
             TwoPair
         }
-    } else OnePair
+    } else { OnePair }
 }
 
 fn cmp(a: string, b: string, order: (string) -> int): int {
@@ -265,7 +265,7 @@ fn bubbleSort(a: array[Hand], cardOrder: (string) -> int) {
             val cmpr = compareHands(a[i].cards, a[i+1].cards, cardOrder)
             if (cmpr == 1) {
                 val tmp = a[i]
-                a[i] = (a[i+1])
+                a[i] = a[i+1]
                 a[i+1] = tmp
             }
             i += 1
@@ -376,7 +376,7 @@ fn bubbleSort2(a: array[Hand], cardOrder: (string) -> int) {
             val cmpr = compareHands2(a[i].cards, a[i+1].cards, cardOrder)
             if (cmpr == 1) {
                 val tmp = a[i]
-                a[i] = (a[i+1])
+                a[i] = a[i+1]
                 a[i+1] = tmp
             }
             i += 1

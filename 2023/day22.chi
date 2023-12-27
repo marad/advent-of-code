@@ -13,7 +13,15 @@ import std/collections.list.linked as fifo { LinkedList, newLinkedList }
 import std/collections.queue.filo as filo { FiloQueue }
 import std/collections.queue.priority as pqueue { PriorityQueue, newPriorityQueue }
 import std/lang.interop as iop
+import std/io { programArguments }
 
+val args = programArguments()
+
+if (args.size() < 1) {
+    println("Provide input file name!")
+}
+
+val input = load(args[0])
 
 val bricks: array[array[int]] = input.splitOnNewLines().map({it:string ->
     it.replace("~", ",").split(",").map({s:string -> s as int})

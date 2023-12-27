@@ -37,7 +37,7 @@ fn part1(lines: array[string]): BigDecimal {
     var result = bd("1")
     var i = 1
     while(i < totalTimes.size()) {
-        if(totalTimes[i].isEmpty()) break
+        if totalTimes[i].isEmpty() { break }
         val totalTime = bd(totalTimes[i].trim())
         val record = bd(records[i].trim())
 

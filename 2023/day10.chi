@@ -35,9 +35,11 @@ fn getWidth(lines: array[string]): int { lines[0].length() }
 fn getHeight(lines: array[string]): int { lines.size() }
 
 fn at(lines: array[string], pos: Point): string {
-    if (pos.y >= 0 && pos.y < lines.getHeight() && 0 <= pos.x && pos.x < lines.getWidth()) {
+    if pos.y >= 0 && pos.y < lines.getHeight() && 0 <= pos.x && pos.x < lines.getWidth() {
         lines[pos.y][pos.x]
-    } else "."
+    } else {
+        "."
+    }
 }
 
 fn getConnectedFieldsAt(lines: array[string], pos: Point): ArrayList[Point] {
