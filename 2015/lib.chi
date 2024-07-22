@@ -1,0 +1,63 @@
+package aoc/lib
+
+import std/io { readString }
+import std/lang { eval, clearPackage }
+
+type IntPoint2D = { x: int, y: int }
+type IntVector2D = { x: int, y: int }
+
+pub fn Point(x: int, y: int): IntPoint2D {
+    { x: x, y: y }
+}
+
+pub fn sum(p: IntPoint2D): int { p.x + p.y }
+
+
+pub fn load(file: string): string {
+    readString(file)
+}
+
+fn folder(day: int): string {
+    if day < 10 {
+        "day0$day"
+    } else {
+        "day$day"
+    }
+}
+
+pub fn l(day: int) {
+    val dir = folder(day)
+    val file = "$dir/code.chi"
+    println("Loading file $file")
+    eval(readString(file))
+}
+
+pub fn testInput(day: int): string {
+    val dir = folder(day)
+    readString("$dir/test.txt")
+}
+
+pub fn prodInput(day: int): string {
+    val dir = folder(day)
+    readString("$dir/prod.txt")
+}
+
+pub fn up(p: IntPoint2D): IntPoint2D {
+    { x: p.x, y: p.y - 1 }
+}
+
+pub fn down(p: IntPoint2D): IntPoint2D {
+    { x: p.x, y: p.y + 1 }
+}
+
+pub fn left(p: IntPoint2D): IntPoint2D {
+    { x: p.x - 1, y: p.y }
+}
+
+pub fn right(p: IntPoint2D): IntPoint2D {
+    { x: p.x + 1, y: p.y }
+}
+
+pub fn splitLines(s: string): array[string] {
+    s.split("\n", 0)
+}

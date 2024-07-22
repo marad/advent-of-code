@@ -1,0 +1,38 @@
+import aoc/lib as aoc { testInput, prodInput }
+
+import std/io { readString }
+import std/lang { eval, clearPackage }
+
+var day = 5
+var input = ""
+
+fn r() {
+    val prevDay = day
+    val prevInput = input
+    eval(readString("boot.chi"))
+    day = prevDay
+    input = prevInput
+    unit
+}
+
+fn c() {
+    eval(readString("compile.chi"))
+    loadModule("mods/aoc.chim")
+}
+
+fn loadAndRun(loadInput: (int) -> string) {
+    var prevDay = day
+    clearPackage("user", "default")
+    eval(readString("boot.chi"))
+    day = prevDay
+    input = loadInput(day)
+    aoc.l(day)
+}
+
+fn t() {
+    loadAndRun(testInput)
+}
+
+fn p() {
+    loadAndRun(prodInput)
+}

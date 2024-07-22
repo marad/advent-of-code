@@ -1,0 +1,37 @@
+import aoc/lib as aoc
+import std/lang.interop as iop { InteropValue }
+import std/lang.types.string { fromCodePoints }
+
+val MessageDigest = iop.lookup("java.security.MessageDigest")
+val String = iop.lookup("java.lang.String")
+
+fn md5(input: string): string {
+    val alg = MessageDigest.invoke("getInstance", ["MD5"])
+    val digest = alg.invoke("digest", [input.codePoints()])
+    var s = ""
+    var i = 0
+    var digestSize = iop.getArraySize(digest.interopValue)
+    while i < digestSize {
+        val byte = iop.getArrayElement(digest.interopValue, i) as int & 255
+        val hex = String.invoke("format", ["%02x" as any, byte as any]).interopValue as string
+        s += hex
+        i += 1
+    }
+    s
+}
+                                                                                                                                                                                                                                                                                                                                    
+fn find(prefix: string): int {
+    var i = 1
+    while true {
+        val x = i as string
+        val fits = md5("$input$x").substring(0,prefix.length()) == prefix
+        if fits {
+            return i
+        }
+        i += 1
+    }
+    i
+}
+
+println("Part 1: ${find("00000")}")
+println("Part 2: ${find("000000")}")

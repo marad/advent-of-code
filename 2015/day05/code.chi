@@ -1,0 +1,100 @@
+import aoc/lib as aoc 
+import std/collections.set as set { Set }
+import std/collections.map as map { Map }
+
+val lines = aoc.splitLines(input)
+
+val vowels = set.of([97, 101, 105, 111, 117])
+
+fn hasAtLeastThreeVowels(cps: array[int]): bool {
+    var i = 0
+    var count = 0
+    while i < cps.size() {
+        val ch = cps[i]
+        if vowels.contains(ch) {
+            count += 1
+        }
+        i += 1
+    }
+    count >= 3
+}
+
+fn hasDoubleLetter(cps: array[int]): bool {
+    var i = 1
+    var lastCh = cps[0]
+    while i < cps.size() {
+        val ch = cps[i]
+        if ch == lastCh {
+            return true
+        }
+        lastCh = ch
+        i += 1 
+    }
+    false
+}
+
+fn doesntHaveForbidden(cps: array[int]): bool {
+    var i = 1
+    var lastCh = cps[0]
+    while i < cps.size() {
+        val ch = cps[i]
+        when {
+            lastCh == 97 && ch == 98 -> return false
+            lastCh == 99 && ch == 100 -> return false
+            lastCh == 112 && ch == 113 -> return false
+            lastCh == 120 && ch == 121 -> return false
+        }
+        lastCh = ch
+        i += 1 
+    }
+    true
+}
+
+fn isNice1(cps: array[int]): bool {
+    hasAtLeastThreeVowels(cps) && hasDoubleLetter(cps) && doesntHaveForbidden(cps)
+}
+
+fn countNice(lines: array[string], isNice: (array[int]) -> bool): int {
+    var i = 0
+    var nice = 0
+    while i < lines.size() {
+        if isNice(lines[i].codePoints()) {
+            nice += 1
+        }
+        i += 1
+    }
+    nice
+}
+
+// lines.forEach() { line: string ->
+//     val cps = line.codePoints()
+//     println("Line: $line")
+//     println(" - vowels: ${hasAtLeastThreeVowels(cps)}")
+//     println(" - double: ${hasDoubleLetter(cps)}")
+//     println(" - forbidden: ${doesntHaveForbidden(cps)}")
+//     println(" - nice: ${isNice(cps)}")
+// }
+
+fn pairTwice(cps: array[int]): bool {
+    val positions = map.empty[array[int], Set[int]]()
+    var i = 1
+    var lastCh = cps[0]
+    while i < cps.size() {
+        val ch = cps[i]
+        val pair = [lastCh, ch]
+        val altSet: Set[int] = set.empty()
+        val s = positions.get(pair).or(altSet)
+        s.add(i-1)
+        positions.put(s)
+        i += 1
+    }
+    println(positions)
+    false
+}
+
+fn isNice2(cps: array[int]): bool {
+    false
+}
+
+println("Part 1: ${countNice(lines, isNice1)}")
+println("Part 2: ${countNice(lines, isNice2)}")

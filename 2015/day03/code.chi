@@ -1,0 +1,52 @@
+import std/collections.set as set { Set }
+import aoc/lib as aoc { Point, IntPoint2D as Point }
+
+val points = input.codePoints()
+
+val left = 60
+val right = 62
+val up = 94
+val down = 118
+
+fn part1(points: array[int]): Set[Point] {
+    var pos = Point(0, 0)
+    val visited = set.of([pos])
+    var i = 0
+    while i < points.size() {
+        val ch = points[i]
+        when {
+            ch == left -> pos = pos.left()
+            ch == right -> pos = pos.right()
+            ch == up -> pos = pos.up()
+            ch == down -> pos = pos.down()
+        }
+        visited.add(pos)
+        i += 1
+    }
+    visited
+}
+
+fn part2(): int {
+    val santa = []
+    val roboSanta = []
+    var i = 0
+    while i < points.size() {
+        val instr = points[i]
+        if i % 2 == 0 {
+            santa.add(instr)
+        } else {
+            roboSanta.add(instr)
+        }
+        i += 1
+    }
+
+    val houses = set.empty()
+    houses.addAll(part1(santa))
+    houses.addAll(part1(roboSanta))
+
+    houses.size()
+}
+
+println("Part 1: ${part1(points).size()}")
+println("Part 2: ${part2()}")
+

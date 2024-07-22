@@ -1,0 +1,55 @@
+
+fn floor(input: string): int {
+    val points = input.codePoints()
+    val open = 40
+    var i = 0
+    var fl = 0
+    while i < input.length() {
+        if points[i] == open {
+            fl += 1
+        } else {
+            fl -= 1
+        }
+        i += 1
+    }
+    fl
+}
+
+fn test(case: string, expectedFloor: int) {
+    val actual = case.floor()
+    if actual != expectedFloor {
+        println("Error in case '$case'. Expected: $expectedFloor, actual: $actual")
+    }
+}
+
+test("(())", 0)
+test("(()(()(", 3)
+test("))(((((", 3)
+test("))(", -1)
+test(")())())", -3)
+
+val prod = input
+
+println("Part 1: ${prod.floor()}")
+
+fn floor2(input: string): int {
+    val points = input.codePoints()
+    val open = 40
+    var i = 0
+    var fl = 0
+    while i < input.length() {
+        if points[i] == open {
+            fl += 1
+        } else {
+            fl -= 1
+        }
+        i += 1
+        if (fl == -1) {
+            return i
+        }
+    }
+    -1
+}
+
+println("Part 2: ${prod.floor2()}")
+0

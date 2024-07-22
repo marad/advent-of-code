@@ -1,0 +1,90 @@
+import aoc/lib as aoc
+
+
+type LWH = { l: int, w: int, h: int}
+
+fn min(a: int, b: int): int {
+    if a < b { a } else { b }
+}
+
+fn min(d: LWH): int {
+    min(d.l, min(d.w, d.h))
+}
+
+fn sort(d: LWH): LWH {
+    if d.l > d.w {
+        val tmp = d.l
+        d.l = d.w 
+        d.w = tmp
+    }
+    if d.w > d.h {
+        val tmp = d.w 
+        d.w = d.h 
+        d.h = tmp
+    }
+    if d.l > d.w {
+        val tmp = d.l
+        d.l = d.w 
+        d.w = tmp
+    }
+    d
+}
+
+fn calcPaper(d: LWH): int {
+    val surface = 2 * d.l * d.w + 2 * d.w * d.h + 2 * d.h * d.l
+    val slack = d.l * d.w
+    surface + slack
+}
+
+fn parseLine(line: string): LWH {
+    val arr = line.split("x", 0)
+    { 
+        l: arr[0] as int, 
+        w: arr[1] as int, 
+        h: arr[2] as int
+    }.sort()
+}
+
+fn map[T, R](arr: array[T], f: (T) -> R): array[R] {
+    val result = []
+    var i = 0
+    while i < arr.size() {
+        result.add(f(arr[i]))
+        i += 1
+    }
+    result
+}
+
+
+fn sum(a: array[int]): int {
+    var s = 0
+    var i = 0
+    while i < a.size() {
+        s += a[i]
+        i += 1
+    }
+    s
+}
+
+
+val text = input
+val lines = map(text.split("\n", 0), parseLine)
+
+fn part1(): int {
+     lines.map(calcPaper).sum()
+}
+
+
+println("Part 1: ${part1()}")
+
+
+fn calcRibbon(d: LWH): int {
+    2 * d.l + 2 * d.w + d.l * d.w * d.h
+}
+
+fn part2(): int {
+    lines.map(calcRibbon).sum()
+}
+
+println("Part 2: ${part2()}")
+
