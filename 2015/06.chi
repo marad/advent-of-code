@@ -1,0 +1,112 @@
+package aoc2015/day06
+
+import std/io.file { readAllLines, readString }
+import std/lang.map { emptyMap }
+import std/lang.set { emptySet, Set }
+import std/lang { luaExpr, embedLua }
+import std/utils { range }
+
+type Point = { x:int, y:int }
+
+fn Point(x:int, y:int): Point { {x:x, y:y} }
+
+fn up(p:Point, dist:int=1) { p.y = p.y + dist }
+fn down(p:Point, dist:int=1) { p.y = p.y - dist }
+fn left(p:Point, dist:int=1) { p.x = p.x - dist }
+fn right(p:Point, dist:int=1) { p.x = p.x + dist }
+
+type Rect = { l: int, t: int, r: int, b: int }
+
+fn Rect(left: int, top: int, right: int, bottom: int): Rect {
+    { l: left, t: top, r: right, b: bottom }
+}
+
+fn toString(r: Rect): string { 
+    "${r.l} - ${r.r}, ${r.t} - ${r.b}"
+}
+
+fn contains(r: Rect, x: int, y: int): bool {
+    r.l <= x && x <= r.r && r.t <= y && y <= r.b 
+}
+
+fn splitV(r: Rect, cut: int): { left: Rect, right: Rect } {
+    {
+        left: { l: r.l, r: cut-1, t: r.t, b: r.b },
+        right: { l: cut, r: r.r, t: r.t, b: r.b }
+    }
+}
+
+fn splitH(r: Rect, cut: int): { top: Rect, bottom: Rect } {
+    {
+        top:    { l: r.l, r: r.r, t: r.t, b: cut-1  },
+        bottom: { l: r.l, r: r.r, t: cut, b: r.b },
+    }
+}
+
+fn isValid(r: Rect): bool {
+    r.l <= r.r && r.t <= r.b
+}
+
+type Command = { cmd: string, area: Rect }
+
+fn parseCommand(line: string): Command {
+    val tmp = line.removePrefix("turn ").split(" ")
+    val s = tmp[2].split(",")
+    val e = tmp[4].split(",")
+    { cmd: tmp[1], area: Rect(s[1].toInt(), s[2].toInt(), e[1].toInt(), e[2].toInt()) }
+}
+
+val lines = readAllLines("06.txt")
+val cmds = lines.map(parseCommand)
+
+val field = Rect(0, 0, 1000, 1000)
+
+val split = field.splitH(500)
+
+println(split.top.toString())
+println(split.top.isValid())
+println(split.bottom.toString())
+println(split.bottom.isValid())
+
+//var count = 0
+//
+//for y in range(0, 1000) {
+//    for x in range(0, 1000) {
+//        var state = false
+//        for cmd in cmds {
+//            if cmd.area.contains(x,y) {
+//                //println("$x,$y is in ${cmd.area.toString()}; cmd: ${cmd.cmd}")
+//                when {
+//                    cmd.cmd == "toggle" -> { 
+//                        state = true
+//                    }
+//                    cmd.cmd == "on" -> {
+//                        state = true
+//                    }
+//                    cmd.cmd == "off" -> {
+//                        state = false
+//                    }
+//                    else ->  {
+//                        println("YO!")
+//                    }
+//                }
+//            }
+//        }
+//        if state {
+//            count += 1
+//        }
+//    }
+//
+//    if y % 100 == 0 {
+//        val perc = y / 10
+//        println("${perc}%")
+//    }
+//}
+//
+//println("Count: $count")
+
+//for cmd in cmds {
+//    if cmd.area.contains(x,y) {
+//        println(cmd.cmd)
+//    }
+//}

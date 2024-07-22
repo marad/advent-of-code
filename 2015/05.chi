@@ -1,0 +1,93 @@
+package aoc2015/day05
+
+import std/io.file { readAllLines, readString }
+import std/lang.map { emptyMap }
+import std/lang.set { emptySet, Set }
+import std/lang { luaExpr, embedLua }
+import std/utils { range }
+
+
+val input = readAllLines("05.txt")
+
+val vowels = emptySet()
+for char in "aeiou".codePoints() {
+    vowels.add(char)
+}
+
+fn countVowels(s: string): int {
+    var count = 0
+    for char in s.codePoints() {
+        if vowels.contains(char) {
+            count += 1
+        }
+    }
+    count
+}
+
+fn hasAtLeastOneRepeatingLetter(s: string): bool {
+    var last = -1
+    for char in s.codePoints() {
+        if char == last {
+            return true
+        }
+        last = char
+    }
+    return false
+}
+
+fn doesntHaveFobiddenParts(s: string): bool {
+    !s.contains("ab") && !s.contains("cd") && !s.contains("pq") && !s.contains("xy")
+}
+
+fn isNice(s: string): bool {
+    s.countVowels() >= 3 && s.hasAtLeastOneRepeatingLetter() && s.doesntHaveFobiddenParts()
+}
+
+fn part1(input: array[string], check: (string) -> bool): int {
+    var count = 0
+    for s in input {
+        if check(s) {
+            count += 1
+        }
+    }
+    count
+}
+
+println("Part 1: ${part1(input, isNice)}")
+
+fn codePointArray(s:string): array[int] {
+    var cps = []
+    for cp in s.codePoints() { cps.push(cp) }
+    cps
+}
+
+fn twice(s: string): bool {
+    var cps = s.codePointArray()
+    val len = s.len()
+    for curIdx in range(1, len-2) {
+        for checkIdx in range(curIdx+2, len) {
+            if cps[curIdx] == cps[checkIdx] && cps[curIdx+1] == cps[checkIdx+1] {
+                return true
+            }
+        }
+    }
+    false
+}
+
+fn repeats(s: string): bool {
+    val cps = s.codePointArray()
+    val len = s.len()
+    for curIdx in range(1, len-1) {
+        if cps[curIdx] == cps[curIdx+2] {
+            return true
+        }
+    }
+    false
+}
+
+
+fn isNowNice(s: string): bool {
+    s.twice() && s.repeats()
+}
+
+println("Part 2: ${part1(input, isNowNice)}")

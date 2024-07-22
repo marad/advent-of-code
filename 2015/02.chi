@@ -1,0 +1,31 @@
+package aoc2015/day02
+
+import std/io.file { readAllLines }
+
+fn parse(line: string): array[int] {
+    line.split("x").map { it -> it as int }
+}
+
+fn readInput(): array[array[int]] {
+    readAllLines("02.txt").map(parse)
+}
+
+val l = 1
+val w = 2
+val h = 3
+
+fn calcPaper(a: array[int]): int {
+    a.sort()
+    2*a[l]*a[w] + 2*a[w]*a[h] + 2*a[h]*a[l] + a[1]*a[2]
+}
+
+val input = readInput()
+println("Part 1: ${input.map(calcPaper).sum()}")
+
+fn calcRibbon(a: array[int]): int {
+    a.sort()
+    a[1]*2 + a[2]*2 + a[l]*a[w]*a[h]
+}
+
+println("Part 2: ${input.map(calcRibbon).sum()}")
+

@@ -1,0 +1,69 @@
+package aoc2015/day03
+
+import std/io.file { readAllLines, readString }
+import std/lang.map { emptyMap }
+import std/lang.set { emptySet, Set }
+import std/lang { luaExpr, embedLua }
+
+
+val input = readString("03.txt")
+
+type Point = { x:int, y:int }
+
+fn p(x:int, y:int): Point { {x:x, y:y} }
+
+fn up(p:Point, dist:int=1) { p.y = p.y + dist }
+fn down(p:Point, dist:int=1) { p.y = p.y - dist }
+fn left(p:Point, dist:int=1) { p.x = p.x - dist }
+fn right(p:Point, dist:int=1) { p.x = p.x + dist }
+fn copy(p:Point): Point { {x:p.x, y:p.y} }
+
+val u = "^".codePointAt(1)
+val d = "v".codePointAt(1)
+val l = "<".codePointAt(1)
+val r = ">".codePointAt(1)
+
+fn countHouses(input: string): int {
+    val set: Set[array[int]] = emptySet()
+    val current = p(0,0)
+    set.add([0,0])
+    
+    for cp in input.codePoints() {
+        when {
+            cp == u -> { up(current) }
+            cp == d -> { down(current) } 
+            cp == l -> { left(current) }
+            cp == r -> { right(current) }
+        }
+        set.add([current.x, current.y])
+    }
+    set.size()
+}
+
+println("Part 1: ${input.countHouses()}")
+
+fn part2(input: string): int {
+    val set = emptySet()
+    val santa = p(0,0)
+    val robo = p(0,0)
+    set.add([0, 0])
+    var turn = true
+    var step = 0
+
+    for cp in input.codePoints() {
+        val current = if turn { santa } else { robo }
+        turn = !turn
+        when {
+            cp == u -> { up(current) }
+            cp == d -> { down(current) } 
+            cp == l -> { left(current) }
+            cp == r -> { right(current) }
+        }
+        set.add([current.x, current.y])
+    }
+    set.size()
+}
+
+
+println("Part 2: ${input.part2()}")
+
