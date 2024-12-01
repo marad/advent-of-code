@@ -1,0 +1,50 @@
+
+import std/io { readLine }
+import std/io.file { readAllLines }
+import std/utils { range }
+import std/lang.map { emptyMap, Map, getOrDefault }
+
+val left: array[int] = []
+val right: array[int] = []
+
+val lines = readAllLines("day01.txt")
+
+for line in lines {
+    val tmp: array[string] = line.split("\\\\s+")
+    left.push(tmp[1].toInt())
+    right.push(tmp[2].toInt())
+}
+
+left.sort()
+right.sort()
+
+fn part1(): int {
+    var sum = 0
+    for idx in range(1, left.size()+1) {
+        sum += (left[idx]-right[idx]).abs()
+    }
+    sum
+}
+println("Part 1: ${part1()}")
+
+fn histogram(arr: array[int]): Map[int,int] {
+    val m = emptyMap()
+    for n in arr {
+        val value = m.getOrDefault(n, 0)
+        m.put(n, value + 1)
+    }
+    m
+}
+
+fn part2() {
+    val hist: Map[int,int] = right.histogram()
+    var sum2 = 0
+    for n in left {
+        val times = hist.getOrDefault(n, 0) as int
+        sum2 += n * times
+    }
+    sum2
+}
+println("Part 2: ${part2()}")
+
+
