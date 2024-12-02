@@ -1,0 +1,109 @@
+import std/utils { range }
+import std/lang.string { split }
+import std/lang.array as array { map, size }
+import std/io.file { readAllLines }
+
+val input = [
+    "7 6 4 2 1",
+    "1 2 7 8 9", 
+    "9 7 6 2 1",
+    "1 3 2 4 5",
+    "8 6 4 4 1", 
+    "1 3 6 7 9"
+]
+//val input = readAllLines("day02.txt")
+//
+// 1 3  2 4 5
+//  2 -1 2 1
+//
+// 1 2 4 5
+//  1 2 1
+
+
+fn parseReports(lines: array[string]): array[array[int]] {
+    val reports = []
+    for line in lines {
+        val tmp = line.split(" ")
+        val levels: array[int] = []
+        for t in tmp {
+            levels.push(t.toInt())
+        }
+        reports.push(levels as int)
+    }
+
+    reports
+}
+
+fn isSafe(report: array[int]): bool {
+    val diffs: array[int] = []
+
+    for i in range(1, array.size(report)) {
+        val diff = report[i+1] - report[i]
+        diffs.push(diff)
+    }
+
+    val increasing = diffs.all { it -> it > 0 }
+    val decreasing = diffs.all { it -> it < 0 }
+    val distOk = diffs.all { it:int -> it != 0 && it.abs() >= 1 && it.abs() <= 3 }
+
+    
+    val result = distOk && (increasing || decreasing)
+    result
+}
+
+
+val reports = parseReports(input)
+
+val part1 = reports
+    .map { it -> if isSafe(it) { 1 } else { 0 } }
+    .sum()
+
+println("Part 1: $part1")
+
+
+
+fn isSafe2(report: array[int]): bool {
+    val diffs: array[int] = []
+
+    for i in range(1, array.size(report)) {
+        val diff = report[i+1] - report[i]
+        diffs.push(diff)
+    }
+
+    val increasing = diffs.all { it -> it > 0 }
+    val decreasing = diffs.all { it -> it < 0 }
+    val distOk = diffs.all { it:int -> it != 0 && it.abs() >= 1 && it.abs() <= 3 }
+    
+    val result = distOk && (increasing || decreasing)
+
+    if !result {
+        println("not ok")
+    }
+
+    // jeśli diffs.count { it -> it > 0 } == 1 
+    //  to znaczy, że jest jeden odczyt, który nie jest rosnący - do usunięcia
+    // jeśli diffs.count { it -> it < 0 } == 1
+    //  to znaczy, że jest jeden odczyt, który nie jest malejący - do usunięcia
+    // te dwa się wykluczają - będzie albo jeden albo drugi
+    // diffs.count { it not in 1-3 } == 1
+    //  to znaczy, że jeden nie spełnia wymogu przedziału
+    // 
+    // może być tak, że jeden nie spełnia wymogu przedziału a drugi monotoniczności
+    // albo tak, że jeden nie spełnia obu
+    
+
+    // znajdź wszystkie indeksy nie spełniające wymogu monotoniczności
+    // znajdź wszystkie indeksy nie spełniające wymogu przedziału
+    // zsumuj te zbiory, jeśli jest to tylko jeden indeks to 
+    //   usuń go i sprawdź poprawność funkcją isSafe() z pierwszego zadania
+
+    result
+}
+
+
+
+val part2 = reports
+    .map { it -> if isSafe2(it) { 1 } else { 0 } }
+    .sum()
+
+println("Part 2: $part2")
