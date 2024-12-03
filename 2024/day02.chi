@@ -2,6 +2,7 @@ import std/utils { range }
 import std/lang.string { split }
 import std/lang.array as array { map, size }
 import std/io.file { readAllLines }
+import std/lang.set { emptySet }
 
 val input = [
     "7 6 4 2 1",
@@ -76,10 +77,6 @@ fn isSafe2(report: array[int]): bool {
     
     val result = distOk && (increasing || decreasing)
 
-    if !result {
-        println("not ok")
-    }
-
     // jeśli diffs.count { it -> it > 0 } == 1 
     //  to znaczy, że jest jeden odczyt, który nie jest rosnący - do usunięcia
     // jeśli diffs.count { it -> it < 0 } == 1
@@ -97,13 +94,42 @@ fn isSafe2(report: array[int]): bool {
     // zsumuj te zbiory, jeśli jest to tylko jeden indeks to 
     //   usuń go i sprawdź poprawność funkcją isSafe() z pierwszego zadania
 
+
+    val indexes = emptySet[int]()
+
+    if diffs.count { it -> it > 0 } == 1 {
+        // almost decreasing
+        indexes.add(diffs.indexOf { it -> it > 0 })
+    } 
+    if diffs.count { it -> it < 0 } == 1 {
+        // almost increasing
+        indexes.add(diffs.indexOf { it -> it < 0 })
+    } 
+
+    if diffs.count { it: int -> it.abs() < 1 || it.abs() > 3 } == 1 {
+        indexes.add(diffs.indexOf { it: int -> it.abs() < 1 || it.abs() > 3 })
+    }
+
+    println(indexes)
+
+    if indexes.size() == 1 {
+        return true
+    }
+
+
     result
 }
 
 
 
 val part2 = reports
-    .map { it -> if isSafe2(it) { 1 } else { 0 } }
+    .map { it -> if isSafe2(it) { 
+        println("safe - $it")
+        1 
+    } else { 
+        println("unsafe - $it")
+        0 
+    } }
     .sum()
 
 println("Part 2: $part2")
