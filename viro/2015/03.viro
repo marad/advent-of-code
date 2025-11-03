@@ -1,0 +1,44 @@
+data: read "03.txt"
+
+pos: [0 0]
+visited: object []
+
+mark-visited: fn [pos] [
+  name: trim --all form reduce [pos.1 "x" pos.2]
+  put visited name true
+]
+
+move: fn [pos instr] [
+  pos: copy pos
+  when instr = ">" [ pos.1: pos.1 + 1 ]
+  when instr = "<" [ pos.1: pos.1 - 1 ]
+  when instr = "v" [ pos.2: pos.2 - 1 ]
+  when instr = "^" [ pos.2: pos.2 + 1 ]
+  pos
+]
+
+mark-visited pos
+
+foreach data instr [
+  pos: move pos instr
+  mark-visited pos
+]
+
+print ["Part 1:" length? words-of visited]
+
+
+
+santa: [0 0]
+robo: [0 0]
+visited: object []
+mark-visited santa
+odd: true
+
+foreach data instr [
+  if odd 
+    [ santa: move santa instr mark-visited santa] 
+    [ robo: move robo instr mark-visited robo]
+  odd: not odd
+]
+
+print ["Part 1:" length? words-of visited]

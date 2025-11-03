@@ -1,0 +1,35 @@
+lines: read --lines "02.txt"
+
+area: fn [dim] [
+  l: first dim 
+  w: second dim
+  h: third dim
+  
+  (2 * l * w) + (2 * w * h) + (2 * h * l) + (l * w)
+]
+
+ribbon: fn [dim] [
+  l: first dim 
+  w: second dim
+  h: third dim
+
+  (2 * l) + (2 * w) + (l * w * h)
+]
+
+part-1: 0
+part-2: 0
+
+foreach lines [line] [
+  dim: split line "x"
+  dim.1: to-integer dim.1
+  dim.2: to-integer dim.2
+  dim.3: to-integer dim.3
+  sort dim
+  
+  part-1: part-1 + (area dim)
+  part-2: part-2 + (ribbon dim)
+]
+
+print ["Part 1:" part-1]
+print ["Part 2:" part-2]
+
