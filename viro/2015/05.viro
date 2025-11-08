@@ -1,0 +1,87 @@
+lines: read --lines "05.txt"
+
+
+nice?: fn [line] [
+  ;================================================== 
+  ; Check if it has vowels
+  vs: 0
+  foreach line char [
+    when find "aeiou" char [
+      vs: vs + 1
+    ]
+  ]
+  vowels: vs >= 3
+
+  ;================================================== 
+  ; Check if string contains double letters
+  double: false
+  prev: first line
+  foreach next line ch [
+    when prev = ch [
+      double: true
+    ]
+    prev: ch
+  ]
+
+  ;================================================== 
+  ; Check if contains "ab", "cd", "pq", "xy"
+  forbidden: false
+  foreach ["ab" "cd" "pq" "xy"] phrase [
+    when find line phrase [
+      forbidden: true
+    ]
+  ]
+
+  vowels and double and not forbidden
+]
+
+part1: 0
+foreach lines line [
+  when nice? line [
+    part1: part1 + 1
+  ]
+]
+
+print ["Part 1:" part1]
+
+; ==================== PART 2 ====================
+
+twice?: fn [line] [
+  len: length? line
+  loop --with-index 'i len - 2 [
+    a: take skip line i 2
+    loop --with-index 'j len - i - 3 [
+      b: take skip line (i + j + 2) 2
+      when a = b [
+        return true
+      ]
+    ]
+  ]
+  false
+]
+
+
+repeats?: fn [line] [
+  len: length? line
+  loop --with-index 'i len - 2 [
+    a: line.(i + 1)
+    b: line.(i + 3)
+    when a = b [
+      return true
+    ]
+  ]
+]
+
+nicer?: fn [line] [
+  (twice? line) and (repeats? line)
+]
+
+
+part2: 0
+foreach lines line [
+  when nicer? line [
+    part2: part2 + 1
+  ]
+]
+
+print ["Part 2:" part2]
