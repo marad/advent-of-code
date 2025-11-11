@@ -1,0 +1,140 @@
+
+; Crates 1000 bit array (125 bytes * 8 bits)
+make-array: fn [] [
+  bitArray: #{}
+  loop 125 [append bitArray 0]
+  bitArray
+]
+
+; Turns on bits in range for given row
+row-on: fn [row from to] [
+  from-byte: from / 8 + 1
+  from-offset: from mod 8
+  to-byte: to / 8 + 1
+  to-offset: to mod 8
+
+  when from-byte = to-byte [
+    mask: ((1 << (to-offset - from-offset + 1)) - 1) << from-offset
+    row.(from-byte): row.(from-byte) | mask
+    return
+  ]
+
+  mask: (255 << from-offset) & 255
+  row.(from-byte): row.(from-byte) | mask
+
+  i: from-byte + 1
+  while [i < to-byte] [
+    row.(i): row.(i) | 255
+    i: i + 1
+  ]
+
+  mask: (1 << (to-offset + 1)) - 1
+  row.(to-byte): row.(to-byte) | mask
+]
+
+; Turns off bits in range for given row
+row-off: fn [row from to] [
+    from-byte: from / 8 + 1
+    from-offset: from mod 8
+    to-byte: to / 8 + 1
+    to-offset: to mod 8
+    
+    when from-byte = to-byte [
+        mask: ((1 << (to-offset - from-offset + 1)) - 1) << from-offset
+        poke row from-byte ((pick row from-byte) & (bit.not mask))
+        return
+    ]
+    
+    mask: (255 << from-offset) & 255
+    poke row from-byte ((pick row from-byte) & (bit.not mask))
+    
+    i: from-byte + 1
+    while [i < to-byte] [
+        poke row i 0
+        i: i + 1
+    ]
+    
+    mask: (1 << (to-offset + 1)) - 1
+    poke row to-byte ((pick row to-byte) & (bit.not mask))
+]
+
+; Toggles bits in range for given row
+row-toggle: fn [row from to] [
+    from-byte: from / 8 + 1
+    from-offset: from mod 8
+    to-byte: to / 8 + 1
+    to-offset: to mod 8
+    
+    when from-byte = to-byte [
+        mask: ((1 << (to-offset - from-offset + 1)) - 1) << from-offset
+        poke row from-byte (bit.xor (pick row from-byte) mask)
+        return
+    ]
+    
+    mask: (255 << from-offset) & 255
+    poke row from-byte (bit.xor (pick row from-byte) mask)
+    
+    i: from-byte + 1
+    while [i < to-byte] [
+        poke row i (bit.xor (pick row i) 255)
+        i: i + 1
+    ]
+    
+    mask: (1 << (to-offset + 1)) - 1
+    poke row to-byte (bit.xor (pick row to-byte) mask)
+]
+
+; Generates 1000 x 1000 grid (1000 rows * 125 bytes)
+lights: []
+loop 1000 [
+  append lights make-array
+]
+
+; Parses a "xxx,yyy" string into block of two integers xxx and yyy
+parse-point: fn [point] [
+  tmp: split to-string point ","
+  reduce [
+    to-integer tmp.1 
+    to-integer tmp.2
+  ]
+]
+
+; Turn on/off ligts in given range
+turn: fn ['state 'from '_ 'to] [
+  from: parse-point from
+  to: parse-point to
+  loop --with-index 'i (to.2 - from.2 + 1) [
+    if state = 'on [
+      row-on lights.(from.2 + i + 1) from.1 to.1
+    ] [
+      row-off lights.(from.2 + i + 1) from.1 to.1
+    ]
+  ]
+]
+
+; Toggles ligts in given range
+toggle: fn ['from '_ 'to] [
+  from: parse-point from
+  to: parse-point to
+  loop --with-index 'i (to.2 - from.2 + 1) [
+    row-toggle lights.(from.2 + i + 1) from.1 to.1
+  ]
+]
+
+; Reads the input file and executes it as a dialect
+instrs: parse tokenize read "06.txt"
+do instrs
+
+sum: 0
+foreach lights row [
+  sum: sum + (bit.count row)
+]
+print ["Part 1:" sum]
+
+;line: "toggle 2,0 through 100,1  toggle 0,0 through 100,1"
+;code: parse tokenize line
+;do code
+;
+;print first lights
+
+

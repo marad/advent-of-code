@@ -1,0 +1,76 @@
+make-array: fn [] [
+  arr: []
+  loop 1000 [append arr 0]
+  arr
+]
+
+lights: []
+
+print "Tworzę tablicę..."
+loop 1000 [ append lights make-array ]
+print "Stworzona!"
+
+parse-point: fn [point] [
+  tmp: split to-string point ","
+  reduce [
+    to-integer tmp.1 
+    to-integer tmp.2
+  ]
+]
+
+turn: fn ['state 'from '_ 'to] [
+  from: parse-point from
+  to: parse-point to
+
+  value: 1
+  when state = 'off [
+    value: -1
+  ]
+
+  loop --with-index 'j (to.2 - from.2 + 1) [
+    y: j + from.2 + 1
+    loop --with-index 'i (to.1 - from.1 + 1) [
+      x: i + from.1 + 1
+      new-value: lights.(y).(x) + value
+      when new-value < 0 [
+        new-value: 0
+      ]
+      lights.(y).(x): new-value
+    ]
+  ]
+]
+
+toggle: fn ['from '_ 'to] [
+  from: parse-point from
+  to: parse-point to
+
+  loop --with-index 'j (to.2 - from.2 + 1) [
+    y: j + from.2 + 1
+    loop --with-index 'i (to.1 - from.1 + 1) [
+      x: i + from.1 + 1
+      lights.(y).(x): lights.(y).(x) + 2
+    ]
+  ]
+]
+
+
+;code: parse tokenize "turn on 1,0 through 3,0"
+;do code 
+;
+;print first lights
+
+print "Symuluję lampki..."
+instrs: parse tokenize read "06.txt"
+do instrs
+print "Gotowe!"
+
+print "Zliczam wynik"
+sum: 0
+
+foreach lights row [
+  foreach row value [
+    sum: sum + value
+  ]
+]
+
+print ["Part 2:" sum]
