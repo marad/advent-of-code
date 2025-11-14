@@ -1,0 +1,60 @@
+lines: read --lines "08.txt"
+
+; ================================================================================
+; Part 1
+totalLen: 0
+foreach lines item [
+  len: length? item
+
+  memLen: len - 2
+  while [not tail? item] [
+    if (first item) = "\\" [
+      nextChar: second item
+      if nextChar = "x" [
+        memLen: memLen - 3 ; \xXX is converted to 1 char (4 -> 1)
+        item: skip item 4
+      ] [
+        memLen: memLen - 1 ; \\ and \" are converted to 1 char
+        item: skip item 2
+      ]
+    ] [
+      item: next item
+    ]
+  ]
+
+  totalLen: totalLen + len - memLen
+]
+
+print ["Part 1:" totalLen]
+
+; ================================================================================
+; Part 2
+
+; Conversions
+; - \    -> \\
+; - "    -> \"
+; Remember to add 2 for the surrounding quotes in final string
+
+totalLen: 0 ; starting with surrounding quotes
+
+foreach lines item [
+  len: 2
+  foreach item char [
+    when char = "\\" [
+      len: len + 2
+      continue
+    ]
+
+    when char = "\"" [
+      len: len + 2
+      continue
+    ]
+
+    len: len + 1
+  ]
+
+  totalLen: totalLen + len - length? item
+]
+
+print ["Part 2:" totalLen]
+
