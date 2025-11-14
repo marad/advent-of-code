@@ -1,0 +1,59 @@
+
+in: read --lines "07.txt.pt2"
+
+; Define and fill the data mapping (wire into dependencies)
+data: object []
+foreach in line [
+  tmp: split line " -> "
+  data.(tmp.2): parse tokenize tmp.1
+]
+
+calc: fn [wire] [
+  when (type? wire) = 'integer! [ return wire ]
+  value: data.(wire)
+  len: length? value
+
+  when len = 1 [
+    ; it's either x -> y or 10 -> z
+    return calc value.1
+  ]
+  when len = 2 [
+    ; only 'NOT blocks are here
+    x: calc value.2
+    return (bit.not x) & 65535
+  ]
+  when len = 3 [
+    a: calc value.1
+    b: calc value.3
+    op: none
+    when value.2 = 'AND [op: '&]
+    when value.2 = 'OR [op: '|]
+    when value.2 = 'LSHIFT [op: '<<]
+    when value.2 = 'RSHIFT [op: '>>]
+    code: compose [(op) (a) (b)]
+    return (do code) & 65535
+  ]
+]
+
+
+memoize1: fn [f] [
+  cache: object []
+  fn [arg] [
+    when (type? arg) = 'integer! [
+      return arg
+    ]
+    when has? cache arg [
+      return cache.(arg)
+    ]
+    result: f arg
+    put cache arg result
+    result
+  ]
+]
+
+calc: memoize1 :calc
+
+part1: calc 'a
+
+print ["Result" part1]
+
