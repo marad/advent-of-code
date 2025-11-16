@@ -1,0 +1,27 @@
+input: "1321131112"
+
+step: fn [input] [
+  out: ""
+  number: first input
+  count: 0
+  foreach input char [
+    if char = number [
+      count: count + 1
+    ] [
+      append out to-string count
+      append out number
+
+      number: char 
+      count: 1
+    ]
+  ]
+
+  append out to-string count
+  append out number
+  out
+]
+
+loop 40 [ input: step input ]
+print ["Part 1:" length? input]
+loop 10 [ input: step input ]
+print ["Part 2:" length? input]
