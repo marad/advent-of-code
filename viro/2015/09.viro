@@ -1,0 +1,26 @@
+
+graph: import "graph.viro"
+
+g: graph.new
+data: read --lines "09.txt"
+
+foreach data item [
+  item: parse tokenize item
+  graph.add-edge g --undirected item.1 item.3 --weight item.5
+]
+
+
+costs: []
+graph.path-permutations g fn [path cost] [
+  append costs cost
+  none
+]
+
+sort costs
+part1: first costs
+part2: last costs
+ 
+print ["Part 1:" part1]
+print ["Part 2:" part2]
+
+

@@ -1,0 +1,109 @@
+graph: object []
+
+graph.new: fn [] [object []]
+
+graph.add-node: fn [g node-name] [ 
+  put g node-name (select g node-name --default object []) 
+  g
+]
+
+graph.add-edge: fn [g from to --undirected --weight [integer!]] [
+  when not has? g from [ graph.add-node g from ]
+  when not has? g to   [ graph.add-node g to ]
+  when weight = none [ weight: 1 ]
+
+  from-adj: select g from
+  put from-adj to weight
+
+  when undirected [
+    to-adj: select g to
+    put to-adj from weight
+  ]
+
+  g
+]
+
+graph.adjacent: fn [g node] [ 
+  select g node 
+]
+graph.nodes: :words-of
+
+
+; Traverses each node of the graph using breadth first search
+; f should be a function with single `node` parameter
+graph.bfs: fn [g start f] [
+  queue: []
+  visited: []
+
+  append queue start
+  append visited start
+
+  while [not tail? queue] [
+    node: first queue 
+    queue: next queue
+    adj: graph.adjacent g node 
+
+    result: f node
+
+    foreach adj neighbour [
+      when not has? visited neighbour [
+        append visited neighbour
+        append queue neighbour
+      ]
+    ]
+    result
+  ]
+
+]
+
+graph.dfs: fn [g node f --visited [block!]] [
+  append visited node
+  adj: graph.adjacent g node
+  result: f node
+  foreach adj neighbour [
+    when not has? visited neighbour [
+      graph.dfs g neighbour :f --visited visited
+    ]
+  ]
+  result
+]
+
+; Enumerates all possible path permutations
+graph.path-permutations: fn [
+  g handler
+  --nodes [block!]  ; nodes to use, all by default
+  --prefix [block!] ; path prefix to use, empty by default
+  --visited [block!]; already visited nodes
+  --current [word!] ; current node
+  --cost [integer!] ; accumulated cost
+] [
+  when nodes = none   [ nodes: words-of g ]
+  when prefix = none  [ prefix: [] ]
+  when visited = none [ visited: [] ]
+  when cost = none    [ cost: 0 ]
+
+  when (length? visited) = (length? nodes) [
+    return handler prefix cost
+  ]
+
+  foreach nodes node [
+    when not has? visited node [
+      when any [current = none has? graph.adjacent g current node] [
+        step-cost: if current = none [0] [select graph.adjacent g current node]
+        next-prefix: append copy prefix node
+        next-visited: append copy visited node
+        next-cost: cost + step-cost
+        result: graph.path-permutations g :handler
+          --nodes nodes
+          --prefix next-prefix
+          --visited next-visited
+          --current node
+          --cost next-cost
+        when result [ return result ]
+      ]
+    ]
+  ]
+  none
+]
+
+graph
