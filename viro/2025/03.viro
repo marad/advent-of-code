@@ -8,6 +8,14 @@ sum: fn [series] [
   s
 ]
 
+build-number: fn [series] [
+  result: 0
+  foreach series digit --with-index 'i [
+    result: result + (digit * pow 10 i)
+  ]
+  result
+]
+
 ; Finds the next biggest number ensuring that
 ; we can later take 'leave' more numbers
 get-next: fn [line leave] [
@@ -33,11 +41,7 @@ collect: fn [line number] [
     append digits result.1
     line: copy skip line (result.2)
   ]
-  result: 0
-  foreach reverse digits digit --with-index 'i [
-    result: result + (digit * pow 10 i)
-  ]
-  to-integer result
+  to-integer build-number reverse digits
 ]
 
 part1: fn [line] [collect line 2]
