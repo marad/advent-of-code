@@ -1,0 +1,47 @@
+data: read --lines "03.txt"
+;data: read --lines "03.txt.tst"
+
+
+sum: fn [series] [
+  s: 0
+  foreach series item [ s: s + item ]
+  s
+]
+
+; Finds the next biggest number ensuring that
+; we can later take 'leave' more numbers
+get-next: fn [line leave] [
+  to-inspect: (length? line) - leave
+  selected: 0
+  pos: 0
+  loop to-inspect --with-index 'i [
+    current: to-integer at line (i + 1)
+    when selected < current [ 
+      selected: current 
+      pos: i + 1
+    ]
+  ]
+  reduce [selected pos]
+]
+
+; Collects a 'number' of biggest digits 
+collect: fn [line number] [
+  digits: []
+  loop number --with-index 'i [
+    left: number - i - 1
+    result: get-next line left
+    append digits result.1
+    line: copy skip line (result.2)
+  ]
+  result: 0
+  foreach reverse digits digit --with-index 'i [
+    result: result + (digit * pow 10 i)
+  ]
+  to-integer result
+]
+
+part1: fn [line] [collect line 2]
+part2: fn [line] [collect line 12]
+
+print ["Part 1" sum map data :part1]
+print ["Part 2" sum map data :part2]

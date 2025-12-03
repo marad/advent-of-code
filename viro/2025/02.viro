@@ -1,0 +1,110 @@
+
+data: trim --with "\n" read "02.txt"
+;data: "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124"
+ranges: split data ","
+
+max: fn [a b] [ if a < b [b] [a] ]
+min: fn [a b] [ if a < b [a] [b] ]
+
+sumrange: fn [range] [
+  bounds: split range "-"
+  ; Numbers of 'd' digits repeating twice are of form:
+  ;    n = (10^k + 1) * X
+  d: length? bounds.2
+  k: d / 2
+
+  start: to-integer bounds.1
+  end: to-integer bounds.2
+
+  sum: 0
+  loop k --with-index 'i [
+    x-min: pow 10 i
+    x-max: (pow 10 (i + 1)) - 1
+    factor: (pow 10 (i + 1)) + 1
+
+    x-lo: ceil (start / factor)
+    x-hi: floor (end / factor)
+
+    x1: to-integer max x-lo x-min
+    x2: to-integer min x-hi x-max
+    
+    when x1 > x2 [ continue ]
+
+    cnt: x2 - x1 + 1
+    sumX: (x1 + x2) * cnt / 2 * factor
+    sum: sum + to-integer sumX
+  ]
+  sum
+]
+
+
+total: 0
+foreach ranges range [
+  total: total + sumrange range
+]
+
+print ["Part 1" total]
+
+
+calc-factor: fn [k m] [
+  f: 0
+  p: 1
+  loop m [
+    f: f + p
+    p: p * (pow 10 k)
+  ]
+  f
+]
+
+sumrange2: fn [range] [
+  bounds: split range "-"
+  start: to-integer bounds.1
+  end: to-integer bounds.2
+  d: length? bounds.2
+
+  invalid: []
+
+  k: 1 
+  while [k <= floor (d / 2)] [
+    m: 2
+    while [m <= floor (d / k)] [
+      F: calc-factor k m
+
+      global-x-min: pow 10 (k - 1)
+      global-x-max: (pow 10 k) - 1
+
+      x-lo: ceil (start / F)
+      x-hi: floor (end / F)
+      
+      x1: max x-lo global-x-min
+      x2: min x-hi global-x-max
+
+      when x1 > x2 [ m: m + 1 continue ]
+
+      x: x1
+      while [x <= x2] [
+        n: x * F
+        append invalid n
+        x: x + 1
+      ]
+
+      m: m + 1
+    ]
+    k: k + 1
+  ]
+
+  invalid: union invalid invalid
+  sum: 0
+  foreach invalid number [ sum: sum + number ]
+  to-integer sum
+]
+
+
+total: 0
+foreach ranges range [
+  total: total + sumrange2 range
+]
+
+print ["Part 2:" total]
+
+
