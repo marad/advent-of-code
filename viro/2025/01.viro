@@ -1,0 +1,63 @@
+data: read --lines "01.txt"
+; test data
+;data: ["L68" "L30" "R48" "L5" "R60" "L55" "L1" "L99" "R14" "L82"]
+
+dial: 50
+count: 0
+count2: 0
+
+; pos - current dial position
+; dir - direction R/L
+; value - amount to turn
+spin: fn [pos dir value] [
+  op: :- 
+  when dir = "R" [ op: :+ ] 
+  offset: value mod 100
+  new: op pos offset
+  clicks: value / 100
+  when any [
+      new < 0 
+      new > 99
+    ] [ 
+    print new
+    clicks: clicks + 1 
+  ]
+  result: new mod 100
+  object [dial: result clicks: clicks]
+]
+
+;probe spin 50 "R" 1051
+
+;foreach data line [
+;  amount: to-integer copy next line
+;  op: :-
+;  when line.1 = "R" [ op: :+ ] 
+;
+;  loop amount [
+;    dial: (op dial 1 + 100) mod 100
+;    when dial = 0 [
+;      count2: count2 + 1
+;    ]
+;  ]
+;
+;
+;  when dial = 0 [ count: count + 1 ]
+;]
+
+foreach data line [
+  amount: to-integer copy next line
+  result: spin dial line.1 amount
+  dial: result.dial
+  count2: count2 + result.clicks
+
+
+  ;print [line ":" predial "+" amount "->" dial] 
+
+  when dial = 0 [
+    count: count + 1
+  ]
+]
+
+
+print ["Part 1:" count]
+print ["Part 2:" count2 count2 + count]
