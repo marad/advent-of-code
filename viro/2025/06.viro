@@ -41,20 +41,18 @@ read-col: fn [data col] [
 sum: fn [numbers] [ r: 0 foreach numbers num [ r: r + num ] r ]
 mul: fn [numbers] [ r: 1 foreach numbers num [ r: r * num ] r ]
 
-
+B: 0
 len: length? data.1
+
 ops: reverse ops
 numbers: []
-B: 0
 loop --with-index 'i len [
   num-str: read-col data (len - i - 1)
 
   if num-str = "" [
-    if (first ops) = '+ [
-      B: B + sum numbers
-    ] [
-      B: B + mul numbers
-    ]
+    if (first ops) = '+ 
+      [ B: B + sum numbers ] 
+      [ B: B + mul numbers ]
     ops: next ops
     numbers: copy []
   ] [
@@ -62,11 +60,10 @@ loop --with-index 'i len [
   ]
 ]
 
-if (first ops) = '+ [
-  B: B + sum numbers
-] [
-  B: B + mul numbers
-]
+if (first ops) = '+ 
+  [ B: B + sum numbers ]
+  [ B: B + mul numbers ]
 
 print ["Part 2:" B]
+
 
