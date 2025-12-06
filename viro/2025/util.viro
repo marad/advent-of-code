@@ -1,0 +1,24 @@
+util: object []
+
+util.merge-ranges: fn [ranges] [
+  sort ranges
+  current: copy first ranges
+  merged: []
+  foreach next ranges range [
+    when all [
+      current.1 <= range.1
+      range.2 <= current.2
+    ] [ continue ]
+
+    if all [ range.1 <= current.2 range.2 > current.2] [
+      current.2: range.2
+    ] [
+      append merged current 
+      current: copy range
+    ]
+  ]
+  append merged current
+  merged
+]
+
+util

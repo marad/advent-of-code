@@ -1,0 +1,69 @@
+data: read --lines "05.txt"
+;data: read --lines "05.txt.tst"
+
+; Data loading
+ranges: []
+ids: []
+state: 'ranges
+
+while [not tail? data] [
+  line: first data
+  data: next data
+
+  when line = "" [
+    state: 'ids
+    continue
+  ]
+
+  if state = 'ranges [
+    tmp: split line "-"
+    append ranges reduce [to-integer tmp.1 to-integer tmp.2]
+  ] [
+    append ids to-integer line
+  ]
+]
+
+util: import "util.viro"
+ranges: util.merge-ranges ranges
+
+; Part 1
+; Simple check if given ID is within any range
+; Careful not to count single id if it's within many ranges
+count: 0
+sort ids 
+range: first ranges
+ranges: next ranges
+
+; Having ranges sorted and merged as well as sorted ids 
+; We can simply examine ids one by one and check the head range 
+; If id is larger than first range, the range can be safely disposed
+foreach ids id [
+  while [all [id > range.2 not none? range]] [
+    range: first ranges
+    ranges: next ranges
+    when none? range [break --levels 2]
+  ]
+  when all [
+    id >= range.1
+    id <= range.2
+  ] [ count: count + 1 ]
+]
+
+print ["Part 1:" count]
+
+
+; Part 2
+; That's simple range lenght's sum but ranges are overlapping
+; so they first need to be merged
+
+ranges: head ranges ; reset the ranges internal pointer
+sum: 0
+foreach ranges range [
+  range
+  len: 1 + (range.2 - range.1)
+  sum: sum + len
+]
+
+print ["Part 2:" sum]
+
+
