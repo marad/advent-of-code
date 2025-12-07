@@ -1,0 +1,146 @@
+data: read --lines "04.txt"
+;data: read --lines "04.txt.tst"
+
+storage: []
+adjacent: [
+  [-1 -1] [ 0 -1] [ 1 -1]
+  [-1  0]         [ 1  0]
+  [-1  1] [ 0  1] [ 1  1]
+]
+ 
+
+foreach data line [
+  row: copy []
+  foreach line char [
+    if char = "." 
+      [ append row 0 ]
+      [ append row 1 ]
+  ]
+  append storage row
+]
+
+width: length? storage.1
+height: length? storage
+
+print "counting degs"
+
+degs: []
+foreach storage row --with-index 'y [
+  deg-row: []
+  foreach row column --with-index 'x [
+    d: 0
+    foreach adjacent pos [
+      nx: pos.1 + x + 1
+      ny: pos.2 + y + 1
+
+      when all [
+        1 <= nx nx <= width
+        1 <= ny ny <= height
+      ] [
+        d: d + (storage.(ny).(nx))
+      ]
+    ]
+    append deg-row d
+  ]
+  append degs deg-row
+]
+
+
+; Data is ready
+; Part 1
+
+count-accessible: fn [storage degs] [
+  c: 0
+  foreach storage row --with-index 'y [
+    foreach row column --with-index 'x [
+      has-paper: 1 = storage.(y + 1).(x + 1)
+      deg: degs.(y + 1).(x + 1)
+      when all [
+        deg < 4
+        has-paper
+      ] [
+        c: c + 1
+      ]
+    ]
+  ]
+  c
+]
+
+
+print ["Part 1:" count-accessible storage degs]
+
+copy2d: fn [block] [ map (copy block) :copy ]
+
+remove-accessible: fn [storage degs] [
+  base-storage: copy2d storage
+  base-degs: copy2d degs
+
+  foreach storage row --with-index 'y [
+    foreach row column --with-index 'x [
+      has-paper: 1 = base-storage.(y + 1).(x + 1)
+      deg: base-degs.(y + 1).(x + 1)
+
+      when all [
+        deg < 4
+        has-paper
+      ] [
+        ; remove the paper 
+        storage.(y + 1).(x + 1): 0
+        ; reduce degree of all adjacent fields
+        foreach adjacent pos [
+          nx: pos.1 + x + 1
+          ny: pos.2 + y + 1
+
+          when all [
+            1 <= nx nx <= width
+            1 <= ny ny <= height
+            ;0 < base-degs.(ny).(nx)
+          ] [
+            degs.(ny).(nx): degs.(ny).(nx) - 1
+          ]
+        ]
+      ]
+    ]
+  ]
+]
+
+
+print-map: fn [] [
+  print ""
+  ;foreach storage row [
+  ;  foreach row value [
+  ;    if value = 1
+  ;      [ prin "@"]
+  ;      [ prin "."]
+  ;  ]
+  ;  print ""
+  ;]
+  loop --with-index 'j length? storage [
+    map-row: at storage (j + 1)
+    foreach map-row value [
+      if value = 1
+        [ prin "@" ]
+        [ prin "." ]
+    ]
+
+    prin " "
+
+    deg-row: at degs (j + 1)
+    foreach deg-row deg [ prin [deg " "] ]
+    print ""
+  ]
+]
+
+sum: 0
+while true [
+  ;print-map
+  accessible: count-accessible storage degs
+  if accessible = 0 [
+    break
+  ] [
+    sum: sum + accessible
+    remove-accessible storage degs
+  ]
+]
+
+print ["Part 2:" sum] 
