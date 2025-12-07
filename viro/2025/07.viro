@@ -1,0 +1,102 @@
+;data: read --lines "07.txt"
+;data: read --lines "07.txt.tst"
+
+
+; For the first part few simple rules on beam travelsal are sufficient
+; to simulate its behavior and count splitting
+; It's commented out because the second part is basically the same
+; (so it also calculates part 1) and faster.
+
+;A: 0
+;foreach data line --with-index 'j [
+;  when j = 0 [ continue ]
+;  foreach line char --with-index 'i [
+;    x: i + 1
+;    y: j + 1
+;    up: data.(y - 1).(x)
+;
+;    when up = "S" [
+;      poke data.(y) x "|"
+;    ]
+;
+;    when (char = ".") and (up = "|") [ poke data.(y) x "|" ]
+;
+;    when (char = "^") and (up = "|") [
+;      poke data.(y) (x - 1) "|"
+;      poke data.(y) (x + 1) "|"
+;      A: A + 1
+;    ]
+;  ]
+;]
+
+;print ["Part 1:" A]
+
+; The second suggests to simulate a graph with depth-first search
+; But it's actually easier to do it similarily as before but also simulate
+; beam's "strength"
+; The beam strength is also a number of ways to get to given beam position.
+; This means that after a single pass, the sum of the last's row beam strengths
+; would also happen to be the sum of all the possible ways the beam can reach the end
+
+A: 0
+
+data: read --lines "07.txt"
+;data: read --lines "07.txt.tst"
+
+start: -1
+split: -2
+
+schema: []
+
+; Change the input data into 2d array of integers.
+; Positive (and zero) integers represent the number of ways given cell can be reached
+; by a beam/particle.
+; Negative ones are special -1 for start and -2 for splitter.
+foreach data line [
+  schema-row: []
+  foreach line char [
+    when char = "." [ append schema-row 0 ]
+    when char = "S" [ append schema-row start ]
+    when char = "^" [ append schema-row split ]
+  ]
+  append schema schema-row
+]
+
+
+foreach schema line --with-index 'j [
+  when j = 0 [ continue ]
+  foreach line value --with-index 'i [
+    x: i + 1
+    y: j + 1
+    up: schema.(y - 1).(x)
+
+    when up = start [
+      ; you can reach current position only from start - 1 way
+      poke schema.(y) x 1
+    ]
+
+    when (value >= 0) and (up >= 0) [ 
+      ; add all the ways you can already access this position
+      ; with all the ways you can access the 'up' position
+      poke schema.(y) x (value + up) 
+    ]
+
+    when (value = split) and (up > 0) [
+      ; splitter distributes the number of ways you can reach it 
+      ; on its sides
+      lval: schema.(y).(x - 1)
+      poke schema.(y) (x - 1) (lval + up)
+      rval: schema.(y).(x + 1)
+      poke schema.(y) (x + 1) (rval + up)
+      A: A + 1
+    ]
+  ]
+]
+
+;foreach schema row [ probe row ]
+
+util: import "util.viro"
+
+print ["Part 1:" A]
+print ["Part 2:" (util.sum last schema)]
+
