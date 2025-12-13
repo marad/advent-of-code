@@ -1,0 +1,82 @@
+parse-line: fn [line] [ 
+  map split line "," :to-integer
+]
+
+input: read --lines "08.txt" count: 1000
+;input: read --lines "08.txt.tst" count: 10
+
+data: []
+foreach input line --with-index 'i [
+  append data append parse-line line (i + 1)
+]
+
+dist-sq: fn [a b] [
+  dx: pow (a.1 - b.1) 2 
+  dy: pow (a.2 - b.2) 2
+  dz: pow (a.3 - b.3) 2
+  dx + dy + dz
+]
+
+edges: []
+
+print "Generating edges..."
+foreach data a --with-index 'i [
+  foreach skip data (i + 1) b [
+    d: dist-sq a b
+    append edges reduce [d a b]
+  ]
+]
+
+print "Sorting edges..."
+sort edges
+
+print "Connecting junction boxes..."
+qf: import "quickfind.viro"
+set: qf.new length? data
+
+p1set: []
+part2: 0
+
+foreach edges edge --with-index 'i [
+  when i = count [ p1set: copy set ]
+  a: edge.2
+  b: edge.3
+  
+  qf.union set a.4 b.4
+
+  when 1 = length? union set set [
+    part2: a.1 * b.1
+    break
+  ]
+]
+
+
+print "Set sizes..."
+element-counts: fn [arr] [
+  result: []
+  arr: reverse sort copy arr
+  current: reduce [0 first arr]
+  
+  foreach arr item [
+    if current.2 = item [
+      current.1: current.1 + 1
+    ] [
+      append result current
+      current: reduce [1 item]
+    ]
+  ]
+
+  append result current
+
+  result
+]
+
+results: reverse sort element-counts p1set
+
+part1: results.1.1 * results.2.1 * results.3.1
+
+print ["Part 1:" part1]
+print ["Part 2:" part2]
+
+
+

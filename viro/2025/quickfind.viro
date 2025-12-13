@@ -1,0 +1,42 @@
+
+; Implements simple quick-find data structure for disjointed sets
+; The simplicity is paid with O(n) complexity for `union`
+; But the memory footprint is O(n) instead of O(2n) 
+; And it was quick to write ;)
+
+quickfind: object []
+
+quickfind.new: fn [size --default []] [
+  data: []
+  loop size --with-index 'i [
+    element: if none? default [i + 1] [default]
+    append data element
+  ]
+  data
+]
+
+quickfind.find: fn [data x] [
+  while [data.(x) <> x] [
+    x: data.(x)
+  ]
+  x
+]
+
+quickfind.union: fn [data a b] [
+  pa: quickfind.find data a
+  pb: quickfind.find data b
+  when pa = pb [
+    return
+  ]
+
+  i: 1
+  foreach data parent [
+    when parent = pb [
+      data.(i): pa
+    ]
+    i: i + 1
+  ]
+]
+
+quickfind
+
